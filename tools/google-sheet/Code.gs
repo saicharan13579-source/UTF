@@ -1,6 +1,6 @@
 /**
  * UTF site portal — Google Sheet backend.
- * Paste this whole file into Extensions > Apps Script of the UTF Google Sheet,
+ * Apps Script project (script.google.com) linked to the UTF Google Sheet by SHEET_ID.
  * run setup() once, then Deploy > New deployment > Web app
  * (Execute as: Me, Who has access: Anyone). Send the Web app URL back.
  *
@@ -13,6 +13,7 @@
  */
 const PIN = '2025';                      // editor PIN — change here and re-deploy to change it
 const TZ = 'Asia/Kolkata';
+const SHEET_ID = '1ETbKpnj1TzfkVXNbkBnM49PZgkCFx9vnPkaEcvE86mg';   // the "UTF site data" Google Sheet
 const SHEETS = {
   plots:   ['id','status','stage','customer','contractor','area','sales','villa','remarks','by','at'],
   edits:   ['at','plot','what','by'],
@@ -21,7 +22,7 @@ const SHEETS = {
 };
 
 function sh(name) {
-  const ss = SpreadsheetApp.getActive();
+  const ss = SpreadsheetApp.openById(SHEET_ID);
   let s = ss.getSheetByName(name);
   if (!s) {
     s = ss.insertSheet(name);
@@ -108,7 +109,7 @@ function upsertDaily(c, force) {
 
 /** Runs every evening (set up by setup()): keeps a dated copy of all plots and the day's counts. */
 function dailySnapshot() {
-  const ss = SpreadsheetApp.getActive(), t = today(), cur = sh('current');
+  const ss = SpreadsheetApp.openById(SHEET_ID), t = today(), cur = sh('current');
   if (cur.getLastRow() < 2) return;
   const name = 'Snapshot ' + t, old = ss.getSheetByName(name);
   if (old) ss.deleteSheet(old);
