@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>UTF Site Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* Layout: liquid-glass portal — frosted panels on a cool blue/cyan/violet field; hero, tab bar, then one clean panel per section */
 :root{
@@ -12,7 +12,7 @@
   --blob-1:#7dd3fc; --blob-2:#a5b4fc; --blob-3:#5eead4; --solid:#ffffff;
   --f-display:"Outfit","Avenir Next","Segoe UI",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --f-mono:var(--f-display);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#0a1122; --sheet:rgba(22,32,58,.58); --ink:#e7eefb; --muted:#9fb0cc; --rule:rgba(148,178,230,.14); --rule-strong:rgba(148,178,230,.26);
@@ -30,7 +30,7 @@
   --blob-1:#0c4a6e; --blob-2:#312e81; --blob-3:#134e4a; --solid:#111a30; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-variant-numeric:tabular-nums;font-size:15px;line-height:1.5}
 .wrap{max-width:1400px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
 h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:.01em}
 .mono{font-family:var(--f-mono)}
@@ -113,7 +113,7 @@ section.panel{padding-top:18px;display:flex;flex-direction:column;gap:18px}
 .plot{cursor:pointer;transform-box:fill-box;transform-origin:center;transition:opacity .2s}
 .plot polygon{stroke:none;stroke-linejoin:round;transition:filter .15s}
 .plot:hover polygon{filter:brightness(1.12)}
-.plot text{pointer-events:none;font-family:var(--f-body);text-anchor:middle;dominant-baseline:middle}
+.plot text{pointer-events:none;font-family:var(--f-display);text-anchor:middle;dominant-baseline:middle}
 .plot .pid{font-weight:700;font-size:4.3px}
 .plot .par{font-size:2.1px;font-weight:500;opacity:.9}
 .plot.dim{opacity:.18}
@@ -303,6 +303,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
 .section-title p{margin:0;color:var(--muted);font-size:14px}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.card,.box,.tablewrap,.tabs,.filters,.entryhead,.mapbar-wrap{background:var(--solid)}}
 @media (max-width:760px){.seg{flex-wrap:wrap;border-radius:18px;width:100%}.seg button{flex:1 1 auto}.search{max-width:none}.hero{padding:20px;border-radius:22px}.tabs{border-radius:18px}.tabs button{padding:8px 12px;font-size:14px}}
+.label,.kpi .l,.hero .eyebrow,.leg .grp,table.t th,table.cmp th,.estate{letter-spacing:.06em;font-weight:500}
 </style>
 
 <div class="wrap">
@@ -659,13 +660,13 @@ const plan=$('#plan'),NS='http://www.w3.org/2000/svg',tilesEl=plan;
     <path d="${MAP.site}" fill="#a4abb8" fill-rule="evenodd"/>
     <path d="${MAP.club}" fill="#dfe9dc" stroke="#4d3f96" stroke-width=".6"/>
     <image href="club.png" x="250" y="255" width="118" height="190" clip-path="url(#clubclip)" preserveAspectRatio="none" opacity=".9" style="mix-blend-mode:multiply"/>
-    <g transform="translate(306,352)"><rect x="-27" y="-4.2" width="54" height="8.4" rx="4.2" fill="#14302e" opacity=".88"/><text y="1.5" font-size="4.2" font-weight="700" fill="#ffffff" text-anchor="middle" font-family="IBM Plex Sans Condensed,Arial Narrow,sans-serif" letter-spacing=".3">CLUBHOUSE &amp; AMENITIES</text></g>
-    <g font-family="IBM Plex Sans Condensed,Arial Narrow,sans-serif" font-size="3.4" font-weight="600" fill="#ffffff" text-anchor="middle">${MAP.roads.map(r=>`<g transform="translate(${r.x},${r.y})"><rect x="-13" y="-2.6" width="26" height="5.2" rx="1" fill="#5f6878" opacity=".85"/><text y="1.2">${r.t}</text></g>`).join('')}</g>
+    <g transform="translate(306,352)"><rect x="-27" y="-4.2" width="54" height="8.4" rx="4.2" fill="#14302e" opacity=".88"/><text y="1.5" font-size="4.2" font-weight="700" fill="#ffffff" text-anchor="middle" font-family="Outfit,Segoe UI,sans-serif" letter-spacing=".3">CLUBHOUSE &amp; AMENITIES</text></g>
+    <g font-family="Outfit,Segoe UI,sans-serif" font-size="3.4" font-weight="600" fill="#ffffff" text-anchor="middle">${MAP.roads.map(r=>`<g transform="translate(${r.x},${r.y})"><rect x="-13" y="-2.6" width="26" height="5.2" rx="1" fill="#5f6878" opacity=".85"/><text y="1.2">${r.t}</text></g>`).join('')}</g>
     <g transform="translate(95,150)"><circle r="34" fill="none" stroke="#e8eef4" stroke-width=".8" opacity=".8"/><circle r="26" fill="none" stroke="#e8eef4" stroke-width=".5" opacity=".6"/>
       <path d="M0,-40 L6,0 L0,40 L-6,0Z" fill="#1d2633"/><path d="M-40,0 L0,6 L40,0 L0,-6Z" fill="#1d2633"/><path d="M0,-40 L6,0 L0,0Z" fill="#f2f5f8"/><path d="M40,0 L0,6 L0,0Z" fill="#f2f5f8"/>
-      <g font-family="IBM Plex Sans Condensed,sans-serif" font-weight="700" font-size="11" fill="#1d2633" text-anchor="middle"><text y="-45">N</text><text y="55">S</text><text x="-50" y="4">W</text><text x="50" y="4">E</text></g></g>
-    <g transform="translate(1128,628) rotate(-24)"><rect x="-58" y="-6" width="116" height="12" rx="2" fill="#4d3f96"/><text y="2.4" font-size="5.6" fill="#fff" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Condensed,sans-serif" letter-spacing=".4">KOTHAGUDA – CHANDIPPA ROAD</text></g>
-    <g transform="translate(1150,660)"><path d="M0,22 L0,4 M-5,10 L0,2 L5,10" stroke="#c62828" stroke-width="2" fill="none" stroke-linecap="round"/><text x="10" y="18" font-size="6" font-weight="700" fill="#1d2633" font-family="IBM Plex Sans Condensed,sans-serif">MAIN GATE</text></g>
+      <g font-family="Outfit,Segoe UI,sans-serif" font-weight="700" font-size="11" fill="#1d2633" text-anchor="middle"><text y="-45">N</text><text y="55">S</text><text x="-50" y="4">W</text><text x="50" y="4">E</text></g></g>
+    <g transform="translate(1128,628) rotate(-24)"><rect x="-58" y="-6" width="116" height="12" rx="2" fill="#4d3f96"/><text y="2.4" font-size="5.6" fill="#fff" text-anchor="middle" font-weight="700" font-family="Outfit,Segoe UI,sans-serif" letter-spacing=".4">KOTHAGUDA – CHANDIPPA ROAD</text></g>
+    <g transform="translate(1150,660)"><path d="M0,22 L0,4 M-5,10 L0,2 L5,10" stroke="#c62828" stroke-width="2" fill="none" stroke-linecap="round"/><text x="10" y="18" font-size="6" font-weight="700" fill="#1d2633" font-family="Outfit,Segoe UI,sans-serif">MAIN GATE</text></g>
     <g id="plots"></g>
     <path d="${MAP.lines}" fill="none" stroke="#000000" stroke-width=".7" stroke-linecap="round" pointer-events="none"/>`;
   plan.innerHTML=h;
