@@ -1,27 +1,33 @@
 <title>UTF Site Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
-/* Layout: drawing-sheet portal — title block, tab strip; site map is the working surface with a side inspector */
+/* Layout: liquid-glass portal — frosted panels on a cool blue/cyan/violet field; hero, tab bar, then one clean panel per section */
 :root{
-  --paper:#eef4f1; --sheet:#ffffff; --ink:#14302e; --muted:#587270; --rule:#d6e3df; --rule-strong:#a7bfb9;
-  --accent:#0e7c6b; --accent-soft:#dcefea; --accent-2:#f2a541; --canvas:#fbfcfb;
-  --hero:#0f3d3a; --hero-2:#155a52; --on-hero:#ffffff; --on-hero-muted:#b9d8d1;
-  --warn-bg:#fdf1d6; --warn-fg:#7a5506;
-  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --paper:#e9f0fa; --sheet:rgba(255,255,255,.62); --ink:#0f1d33; --muted:#52627a; --rule:rgba(30,58,110,.12); --rule-strong:rgba(30,58,110,.22);
+  --accent:#2563eb; --accent-soft:rgba(37,99,235,.10); --accent-2:#06b6d4; --canvas:#eef3fa;
+  --hero:#1e3a8a; --hero-2:#0e7490; --on-hero:#ffffff; --on-hero-muted:rgba(226,238,255,.82);
+  --warn-bg:rgba(99,102,241,.10); --warn-fg:#3730a3;
+  --glass:rgba(255,255,255,.55); --glass-strong:rgba(255,255,255,.78); --glass-edge:rgba(255,255,255,.75); --glass-shadow:0 10px 40px rgba(30,58,138,.12),0 1px 0 rgba(255,255,255,.8) inset;
+  --blob-1:#7dd3fc; --blob-2:#a5b4fc; --blob-3:#5eead4; --solid:#ffffff;
+  --f-display:"Outfit","Avenir Next","Segoe UI",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#0c1615; --sheet:#132321; --ink:#e2efeb; --muted:#93b0aa; --rule:#213a36; --rule-strong:#35544e;
-  --accent:#3fc1a8; --accent-soft:#173a34; --accent-2:#f5b85e; --canvas:#e9ecea;
-  --hero:#0a2a27; --hero-2:#11423c; --on-hero:#ffffff; --on-hero-muted:#a5cbc3;
-  --warn-bg:#35290f; --warn-fg:#efc86a; color-scheme:dark}}
+  --paper:#0a1122; --sheet:rgba(22,32,58,.58); --ink:#e7eefb; --muted:#9fb0cc; --rule:rgba(148,178,230,.14); --rule-strong:rgba(148,178,230,.26);
+  --accent:#60a5fa; --accent-soft:rgba(96,165,250,.14); --accent-2:#22d3ee; --canvas:#e6edf7;
+  --hero:#172554; --hero-2:#155e75; --on-hero:#ffffff; --on-hero-muted:rgba(214,228,255,.78);
+  --warn-bg:rgba(129,140,248,.14); --warn-fg:#c7d2fe;
+  --glass:rgba(20,30,56,.55); --glass-strong:rgba(24,36,66,.82); --glass-edge:rgba(255,255,255,.12); --glass-shadow:0 10px 40px rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.06) inset;
+  --blob-1:#0c4a6e; --blob-2:#312e81; --blob-3:#134e4a; --solid:#111a30; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --paper:#0c1615; --sheet:#132321; --ink:#e2efeb; --muted:#93b0aa; --rule:#213a36; --rule-strong:#35544e;
-  --accent:#3fc1a8; --accent-soft:#173a34; --accent-2:#f5b85e; --canvas:#e9ecea;
-  --hero:#0a2a27; --hero-2:#11423c; --on-hero:#ffffff; --on-hero-muted:#a5cbc3;
-  --warn-bg:#35290f; --warn-fg:#efc86a; color-scheme:dark}
+  --paper:#0a1122; --sheet:rgba(22,32,58,.58); --ink:#e7eefb; --muted:#9fb0cc; --rule:rgba(148,178,230,.14); --rule-strong:rgba(148,178,230,.26);
+  --accent:#60a5fa; --accent-soft:rgba(96,165,250,.14); --accent-2:#22d3ee; --canvas:#e6edf7;
+  --hero:#172554; --hero-2:#155e75; --on-hero:#ffffff; --on-hero-muted:rgba(214,228,255,.78);
+  --warn-bg:rgba(129,140,248,.14); --warn-fg:#c7d2fe;
+  --glass:rgba(20,30,56,.55); --glass-strong:rgba(24,36,66,.82); --glass-edge:rgba(255,255,255,.12); --glass-shadow:0 10px 40px rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.06) inset;
+  --blob-1:#0c4a6e; --blob-2:#312e81; --blob-3:#134e4a; --solid:#111a30; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
@@ -61,7 +67,7 @@ h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:
 section.panel:not([hidden]){animation:fadeUp .35s ease both}
 @keyframes fadeUp{from{opacity:.4;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes pop{0%{transform:translate(-50%,-50%) scale(0)}70%{transform:translate(-50%,-50%) scale(1.15)}100%{transform:translate(-50%,-50%) scale(1)}}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(242,165,65,.9)}50%{box-shadow:0 0 0 14px rgba(242,165,65,0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,211,238,.9)}50%{box-shadow:0 0 0 14px rgba(34,211,238,0)}}
 .chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .chips button{font:600 13px var(--f-display);letter-spacing:.03em;border:1.5px solid var(--rule-strong);background:var(--sheet);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer;transition:all .15s}
 .chips button:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
@@ -112,7 +118,7 @@ section.panel{padding-top:18px;display:flex;flex-direction:column;gap:18px}
 .plot .par{font-size:2.1px;font-weight:500;opacity:.9}
 .plot.dim{opacity:.18}
 .plot.sel polygon{stroke:#fff;stroke-width:1.6;animation:selp 1.4s ease-in-out infinite}
-@keyframes selp{50%{stroke:#f2a541;stroke-width:2.4}}
+@keyframes selp{50%{stroke:#22d3ee;stroke-width:2.4}}
 .plot .flagdot{display:none}
 .plot.flag .flagdot{display:inline}
 #plan.nolabels .pid,#plan.nolabels .par,#plan.noarea .par{display:none}
@@ -219,6 +225,84 @@ table.et tr.edited td.v::after{content:" ●";color:var(--accent);font-size:10px
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#14302e;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--rule-strong);font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 24px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ===== liquid glass theme (cool palette) ===== */
+body{background:var(--paper);background-image:radial-gradient(42vw 42vw at 8% 0%,color-mix(in srgb,var(--blob-1) 70%,transparent),transparent 70%),radial-gradient(38vw 38vw at 95% 12%,color-mix(in srgb,var(--blob-2) 70%,transparent),transparent 70%),radial-gradient(46vw 46vw at 60% 100%,color-mix(in srgb,var(--blob-3) 55%,transparent),transparent 70%);background-attachment:fixed}
+.wrap{display:flex;flex-direction:column;gap:18px}
+.glass,.card,.box,.tablewrap,.mapbar-wrap,.note,.estate,.tabs,.seg,.search input,.chips button,.vtools button,.filters input,.filters select,table.et input,table.et select,.navrow button{
+  -webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%)}
+.card,.box,.tablewrap,.mapbar-wrap{background:var(--glass);border:1px solid var(--glass-edge);border-radius:20px;box-shadow:var(--glass-shadow)}
+.card{padding:22px}
+.card:hover{transform:none;box-shadow:var(--glass-shadow)}
+.tablewrap{border-radius:18px;overflow:auto}
+table.t th{background:var(--glass-strong);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--rule-strong)}
+table.t td{border-bottom:1px solid var(--rule)}
+table.t tbody tr:hover td{background:var(--accent-soft)}
+h1,h2,h3{font-family:var(--f-display);letter-spacing:-.01em}
+.card h2{font-size:21px;font-weight:600}
+.label,.legend b,.hb b{color:var(--muted)}
+/* hero */
+.hero{border-radius:28px;background:linear-gradient(135deg,color-mix(in srgb,var(--hero) 92%,transparent),color-mix(in srgb,var(--hero-2) 85%,transparent));border:1px solid rgba(255,255,255,.22);box-shadow:0 20px 60px rgba(30,58,138,.28),0 1px 0 rgba(255,255,255,.25) inset;padding:28px}
+.hero::before{background-image:radial-gradient(60% 120% at 85% -20%,rgba(255,255,255,.28),transparent 60%),linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:auto,32px 32px,32px 32px}
+.hero h1{font-weight:700;letter-spacing:-.02em}
+.hero h1 span{color:#67e8f9}
+.kpi{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.24);border-radius:18px;-webkit-backdrop-filter:blur(16px) saturate(160%);backdrop-filter:blur(16px) saturate(160%);box-shadow:0 1px 0 rgba(255,255,255,.25) inset}
+.kpi:hover{background:rgba(255,255,255,.2);transform:translateY(-2px)}
+.kpi b{font-family:var(--f-display);font-weight:700}
+/* tabs: sticky glass bar */
+.tabs{position:sticky;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:30;margin:0 auto;background:var(--glass-strong);border:1px solid var(--glass-edge);box-shadow:var(--glass-shadow);padding:6px;gap:4px}
+.tabs button{font-family:var(--f-display);font-weight:600;text-transform:none;letter-spacing:0;font-size:15px;padding:9px 18px}
+.tabs button[aria-selected="true"]{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 35%,transparent)}
+section.panel{padding-top:0;gap:18px}
+/* map toolbar grouped */
+.mapbar-wrap{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.mapbar{gap:12px 16px}
+.seg{border:1px solid var(--glass-edge);background:var(--glass);box-shadow:var(--glass-shadow);padding:4px;gap:2px}
+.seg button{border:0;border-radius:999px;font-family:var(--f-display);text-transform:none;letter-spacing:0;font-size:14px;padding:8px 14px;color:var(--ink)}
+.seg button[aria-pressed="true"]{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+.search input{background:var(--glass);border:1px solid var(--glass-edge);box-shadow:var(--glass-shadow)}
+.search input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.chk{color:var(--muted);font-size:14px}
+.chk input{accent-color:var(--accent)}
+.chips button{background:var(--glass);border:1px solid var(--glass-edge);font-family:var(--f-display);font-weight:500}
+.chips button:hover{border-color:var(--accent);color:var(--accent)}
+.mapgrid{gap:18px}
+.viewer{border:1px solid var(--glass-edge);border-radius:22px;box-shadow:var(--glass-shadow)}
+.vtools button{background:var(--glass-strong);border:1px solid var(--glass-edge);border-radius:12px;color:var(--ink);box-shadow:var(--glass-shadow)}
+.side{gap:18px}
+.box{padding:16px 18px}
+.leg button:hover{background:var(--accent-soft)}
+.sw{border-radius:4px;border-color:rgba(15,29,51,.25)}
+.pill{border-color:rgba(15,29,51,.18)}
+.detail .vid{font-family:var(--f-display);font-weight:700}
+.navrow button{background:var(--glass);border:1px solid var(--glass-edge);border-radius:12px;color:var(--ink)}
+a.btn,button.btn{border:1px solid var(--glass-edge);border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-family:var(--f-display);text-transform:none;letter-spacing:0;font-size:14px;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 30%,transparent)}
+a.btn:hover,button.btn:hover{filter:brightness(1.08);background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+button.btn:disabled{opacity:.45;filter:grayscale(.3);box-shadow:none;cursor:default}
+.lnk{color:var(--accent)}
+/* filters + tables */
+.filters{background:var(--glass);border:1px solid var(--glass-edge);border-radius:18px;box-shadow:var(--glass-shadow);padding:14px 16px}
+.filters input,.filters select,table.et input,table.et select{background:var(--glass-strong);border:1px solid var(--rule-strong);border-radius:10px;color:var(--ink)}
+table.et input:disabled,table.et select:disabled{background:transparent;border-color:transparent}
+table.et tr.dirty td{background:var(--warn-bg)}
+.note{background:var(--warn-bg);color:var(--warn-fg);border:1px solid color-mix(in srgb,var(--warn-fg) 25%,transparent);border-left:4px solid var(--accent);border-radius:18px;padding:16px 18px}
+.flagnote{background:var(--warn-bg);color:var(--warn-fg);border-radius:12px}
+.estate{background:var(--accent-soft);border:1px solid var(--glass-edge)}
+.estate.ro{background:var(--warn-bg);color:var(--warn-fg)}
+.entryhead{background:var(--glass);border:1px solid var(--glass-edge);border-radius:20px;box-shadow:var(--glass-shadow);padding:18px 20px}
+.pinui input{background:var(--glass-strong);border:1px solid var(--rule-strong);border-radius:12px}
+.hb .t{background:var(--accent-soft);border-radius:999px;overflow:hidden}
+.hb .t i{border-radius:999px}
+.hb:hover{background:var(--accent-soft)}
+.toast{background:rgba(15,29,51,.82);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.18)}
+.tip{background:rgba(15,29,51,.86);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:12px;border:1px solid rgba(255,255,255,.15)}
+.sugg{background:var(--glass-strong);border:1px solid var(--glass-edge);border-radius:14px;overflow:auto;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+footer{border-top:1px solid var(--rule-strong);margin-top:8px}
+.section-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.section-title h2{font-size:24px;font-weight:600}
+.section-title p{margin:0;color:var(--muted);font-size:14px}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.card,.box,.tablewrap,.tabs,.filters,.entryhead,.mapbar-wrap{background:var(--solid)}}
+@media (max-width:760px){.seg{flex-wrap:wrap;border-radius:18px;width:100%}.seg button{flex:1 1 auto}.search{max-width:none}.hero{padding:20px;border-radius:22px}.tabs{border-radius:18px}.tabs button{padding:8px 12px;font-size:14px}}
 </style>
 
 <div class="wrap">
@@ -230,16 +314,16 @@ footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--rule-strong);
     </div>
     <div class="ring" aria-label="Share of 258 villas handed over">
       <svg viewBox="0 0 42 42"><circle cx="21" cy="21" r="15.9" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="4"/>
-        <circle id="ringDone" cx="21" cy="21" r="15.9" fill="none" stroke="#3fbf86" stroke-width="4" stroke-dasharray="0 100" stroke-linecap="round" style="transition:stroke-dasharray 1.4s cubic-bezier(.2,.8,.2,1)"/>
-        <circle id="ringWip" cx="21" cy="21" r="15.9" fill="none" stroke="#f2a541" stroke-width="4" stroke-dasharray="0 100" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dasharray 1.4s cubic-bezier(.2,.8,.2,1) .2s"/></svg>
+        <circle id="ringDone" cx="21" cy="21" r="15.9" fill="none" stroke="#5eead4" stroke-width="4" stroke-dasharray="0 100" stroke-linecap="round" style="transition:stroke-dasharray 1.4s cubic-bezier(.2,.8,.2,1)"/>
+        <circle id="ringWip" cx="21" cy="21" r="15.9" fill="none" stroke="#93c5fd" stroke-width="4" stroke-dasharray="0 100" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dasharray 1.4s cubic-bezier(.2,.8,.2,1) .2s"/></svg>
       <div class="c"><b id="ringPct">0%</b><small>handed over</small></div>
     </div>
     <div class="kpis">
       <button class="kpi" data-go="all"><span class="l"><i style="background:#fff"></i>Total villas</span><b data-count="258">0</b><small>Show whole site</small></button>
-      <button class="kpi" data-go="done"><span class="l"><i style="background:#3fbf86"></i>Handed over</span><b id="kHo">0</b><small>Villas handed over</small></button>
-      <button class="kpi" data-go="wip"><span class="l"><i style="background:#f2a541"></i>Under construction</span><b id="kWip">0</b><small>Villas with a stage</small></button>
-      <button class="kpi" data-go="sold"><span class="l"><i style="background:#b79be0"></i>Sold · not started</span><b id="kSold">0</b><small>Villas confirmed sold</small></button>
-      <button class="kpi" data-go="nyt"><span class="l"><i style="background:#9fb3b0"></i>Unsold · not started</span><b id="kNyt">0</b><small>Villas not started</small></button>
+      <button class="kpi" data-go="done"><span class="l"><i style="background:#5eead4"></i>Handed over</span><b id="kHo">0</b><small>Villas handed over</small></button>
+      <button class="kpi" data-go="wip"><span class="l"><i style="background:#93c5fd"></i>Under construction</span><b id="kWip">0</b><small>Villas with a stage</small></button>
+      <button class="kpi" data-go="sold"><span class="l"><i style="background:#c4b5fd"></i>Sold · not started</span><b id="kSold">0</b><small>Villas confirmed sold</small></button>
+      <button class="kpi" data-go="nyt"><span class="l"><i style="background:#cbd5e1"></i>Unsold · not started</span><b id="kNyt">0</b><small>Villas not started</small></button>
     </div>
   </header>
 
@@ -254,6 +338,8 @@ footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--rule-strong);
 
   <!-- SITE MAP -->
   <section class="panel" id="map" role="tabpanel" aria-labelledby="tab-map">
+    <div class="section-title"><h2>Master layout</h2><p>Colour the plots by stage, sales, contractor or drawing check. Click a plot for its details.</p></div>
+    <div class="mapbar-wrap">
     <div class="mapbar">
       <div class="seg" role="group" aria-label="Colour plots by">
         <button id="m-progress" aria-pressed="true">Progress</button>
@@ -272,6 +358,7 @@ footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--rule-strong);
     </div>
 
     <div class="chips" id="chips"><span class="label">Jump to</span></div>
+    </div>
     <div class="mapgrid">
       <div class="viewer" id="viewer">
         <div class="stage" id="stage">
@@ -306,6 +393,7 @@ footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--rule-strong);
 
   <!-- WIP -->
   <section class="panel" id="wip" role="tabpanel" aria-labelledby="tab-wip" hidden>
+    <div class="section-title"><h2>Under construction</h2><p>Villas with a recorded stage. Click a row to see it on the map.</p></div>
     <div class="filters">
       <label><span class="label">Search</span><input id="wq" type="search" placeholder="Villa no, customer or contractor"></label>
       <label><span class="label">Series</span><select id="ws"></select></label>
@@ -332,6 +420,7 @@ footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--rule-strong);
 
   <!-- NYT -->
   <section class="panel" id="nyt" role="tabpanel" aria-labelledby="tab-nyt" hidden>
+    <div class="section-title"><h2>Not yet started</h2><p>Unsold, sold and listed villas without construction progress.</p></div>
     <div class="filters">
       <label><span class="label">Search</span><input id="nq" type="search" placeholder="Villa no"></label>
       <label><span class="label">Series</span><select id="ns"></select></label>
@@ -387,6 +476,7 @@ footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--rule-strong);
 
   <!-- SUMMARY -->
   <section class="panel" id="summary" role="tabpanel" aria-labelledby="tab-summary" hidden>
+    <div class="section-title"><h2>Summary</h2><p>Final counts, daily progress, stages, contractors and open questions.</p></div>
     <div class="grid2">
       <div class="card">
         <h2>Final status, 26-10-2026</h2>
@@ -429,6 +519,7 @@ footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--rule-strong);
 
   <!-- DRAWINGS -->
   <section class="panel" id="drawings" role="tabpanel" aria-labelledby="tab-drawings" hidden>
+    <div class="section-title"><h2>Drawings &amp; files</h2><p>Source drawings and data lists behind this site.</p></div>
     <div class="tablewrap">
       <table class="t" style="min-width:640px">
         <thead><tr><th>Drawing / file</th><th>Description</th><th>Date</th><th>Open</th></tr></thead>
@@ -467,11 +558,11 @@ const fmt=n=>n==null?"—":(+n).toLocaleString("en-IN",{maximumFractionDigits:2}
 
 const STAGES=["Foundation & Structural Works","Block Work","Plastering Work","Tiling Work","Doors and Windows Work","Painting Work","External Development","Ready to Handover"];
 const SHORT={"Foundation & Structural Works":"Foundation & structure","Block Work":"Block work","Plastering Work":"Plastering","Tiling Work":"Tiling","Doors and Windows Work":"Doors & windows","Painting Work":"Painting","External Development":"External development","Ready to Handover":"Ready to hand over"};
-/* Own colour code: progress runs pale yellow → deep orange-brown as work advances; green = done; grey dashed = not started */
-const STAGE_COL=["#fde9a9","#f9cf6a","#f4ad3d","#ea8a2c","#d8662a","#bb4a26","#8f3520","#2a8c7a"];
-const C_DONE="#3f9a68", C_NS="#e4e8ea", C_NEUTRAL="#eef0ef";
-const SALES={"Sale Customer Choice":["Customer choice","#8a63d2"],"Open&Plotted":["Open & plotted","#2f86d1"],"Open&Default":["Open & default","#d8453b"],"Open&Hold":["Open & hold","#e7b021"],"Sales Required":["Sales required (drawing)","#2aa39a"],"Ravikanth Reddy":["Ravikanth Reddy (drawing)","#c4589a"],"—":["Not recorded","#9aa5aa"]};
-const CON_COL=["#2f86d1","#e07b39","#3f9a68","#b44fa3","#c9a227","#d8453b","#1d9aa6","#6f5bd0","#7a8a3a"];
+/* Own colour code (cool): progress runs ice blue → deep indigo as work advances; teal-green = handed over; dashed slate = not started */
+const STAGE_COL=["#d6f1fe","#a5dcf6","#6fc0ec","#3c9fdc","#2f7bd0","#3b5bc0","#4338a8","#5eead4"];
+const C_DONE="#14a37f", C_NS="#e2e8f0", C_NEUTRAL="#eef2f7";
+const SALES={"Sale Customer Choice":["Customer choice","#7c3aed"],"Open&Plotted":["Open & plotted","#0ea5e9"],"Open&Default":["Open & default","#c026d3"],"Open&Hold":["Open & hold","#64748b"],"Sales Required":["Sales required (drawing)","#14b8a6"],"Ravikanth Reddy":["Ravikanth Reddy (drawing)","#818cf8"],"—":["Not recorded","#94a3b8"]};
+const CON_COL=["#2563eb","#06b6d4","#10b981","#8b5cf6","#6366f1","#0ea5e9","#14b8a6","#a855f7","#475569"];
 
 const NOTE_SALES={'Default':'Open&Default','Hold':'Open&Hold','Customer Choice':'Sale Customer Choice','Sales Required':'Sales Required','Ravikanth Reddy':'Ravikanth Reddy'};
 const HATCH={handover:['Handed over','#3f9a68'],ready:['Ready to hand over','#e9c234'],finish:['Finishings','#3f6fc4'],bw:['BW & plaster','#d4574a'],roof:['Roof fabrication','#c23bb8'],struct:['Structure','#7c8488'],none:['Not hatched (no work)','#f4f5f7']};
@@ -522,15 +613,15 @@ const conColor=c=>c==='Not assigned'?'#ffffff':CON_COL[Math.max(0,contractors.in
 const MODES={
   progress:{title:"Construction progress",cats(){const c=[{grp:"Under construction"}];
       STAGES.forEach((s,i)=>c.push({key:'s'+i,label:SHORT[s],color:STAGE_COL[i]}));
-      c.push({grp:"Other"});c.push({key:'done',label:'Handed over (HO list)',color:C_DONE});c.push({key:'ns',label:'Not yet started',color:C_NS,ns:true});c.push({key:'sold',label:'Sold · construction not started',color:'#b79be0',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#a8d3e0',ns:true});c.push({key:'unk',label:'Not in any list',color:'#d6dcd8',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});return c},
+      c.push({grp:"Other"});c.push({key:'done',label:'Handed over (HO list)',color:C_DONE});c.push({key:'ns',label:'Not yet started',color:C_NS,ns:true});c.push({key:'sold',label:'Sold · construction not started',color:'#c4b5fd',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#bae6fd',ns:true});c.push({key:'unk',label:'Not in any list',color:'#cbd5e1',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});return c},
     key(p){return p.group==='wip'?'s'+p.stageIdx:p.group==='nyt'?'ns':p.group}},
   sales:{title:"Sales status (not started)",cats(){const c=[{grp:"Not yet started"}];
       Object.entries(SALES).forEach(([k,[l,col]])=>c.push({key:'sl:'+k,label:l,color:col,ns:true}));
-      c.push({grp:"Other"});c.push({key:'wip',label:'Under construction',color:'#c9cfd2'});c.push({key:'done',label:'Handed over (HO list)',color:C_NEUTRAL});c.push({key:'sold',label:'Sold · construction not started',color:'#b79be0',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#a8d3e0',ns:true});c.push({key:'unk',label:'Not in any list',color:'#d6dcd8',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});return c},
+      c.push({grp:"Other"});c.push({key:'wip',label:'Under construction',color:'#cbd5e1'});c.push({key:'done',label:'Handed over (HO list)',color:C_NEUTRAL});c.push({key:'sold',label:'Sold · construction not started',color:'#c4b5fd',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#bae6fd',ns:true});c.push({key:'unk',label:'Not in any list',color:'#cbd5e1',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});return c},
     key(p){return p.group==='nyt'?'sl:'+(SALES[p.sales]?p.sales:'—'):p.group}},
   contractor:{title:"Contractor (under construction)",cats(){const c=[{grp:"Under construction"}];
       contractors.forEach(n=>c.push({key:'c:'+n,label:n,color:conColor(n)}));
-      c.push({grp:"Other"});c.push({key:'nyt',label:'Not yet started',color:C_NS,ns:true});c.push({key:'done',label:'Handed over (HO list)',color:C_NEUTRAL});c.push({key:'sold',label:'Sold · construction not started',color:'#b79be0',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#a8d3e0',ns:true});c.push({key:'unk',label:'Not in any list',color:'#d6dcd8',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});return c},
+      c.push({grp:"Other"});c.push({key:'nyt',label:'Not yet started',color:C_NS,ns:true});c.push({key:'done',label:'Handed over (HO list)',color:C_NEUTRAL});c.push({key:'sold',label:'Sold · construction not started',color:'#c4b5fd',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#bae6fd',ns:true});c.push({key:'unk',label:'Not in any list',color:'#cbd5e1',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});return c},
     key(p){return p.group==='wip'?'c:'+(p.contractor||'Not assigned'):p.group}},
   drawing:{title:"Status marked on drawing",cats(){const c=[{grp:"Hatch on UTF_LAYOUT_1"}];
       Object.entries(HATCH).forEach(([k,[l,col]])=>c.push({key:'h:'+k,label:l,color:col,ns:k==='none'}));
@@ -626,15 +717,15 @@ function showDetail(p){
       <dl><dt>Sales required</dt><dd>${esc(s[0])}</dd><dt>Status</dt><dd>${esc(p.status||'—')}</dd><dt>Plotted</dt><dd>${esc(p.plotted||'—')}</dd>
       ${p.entry&&p.entry!==p.id?`<dt>Tracker entry</dt><dd>${esc(p.entry)}</dd>`:''}</dl>`;
   }else if(p.group==='sold'){
-    h+=`<span class="pill" style="background:#b79be0;color:#18242b">Sold · construction not started</span><p class="hint" style="margin:0">Sold (confirmed 26-10-2026). No construction stage, customer or contractor recorded yet.${p.entry&&p.entry!==p.id?' Tracker entry: '+esc(p.entry)+'.':''}${p.contractor?' Contractor column: '+esc(p.contractor)+'.':''}</p>`;
+    h+=`<span class="pill" style="background:#c4b5fd;color:#18242b">Sold · construction not started</span><p class="hint" style="margin:0">Sold (confirmed 26-10-2026). No construction stage, customer or contractor recorded yet.${p.entry&&p.entry!==p.id?' Tracker entry: '+esc(p.entry)+'.':''}${p.contractor?' Contractor column: '+esc(p.contractor)+'.':''}</p>`;
   }else if(p.group==='listed'){
-    h+=`<span class="pill" style="background:#a8d3e0;color:#18242b">In WIP list · no progress recorded</span><p class="hint" style="margin:0">Listed in the WIP sheet (${esc(p.entry)}) but no stage, customer or area is filled in.${p.contractor?' Contractor column: '+esc(p.contractor)+'.':''}</p>`;
+    h+=`<span class="pill" style="background:#bae6fd;color:#18242b">In WIP list · no progress recorded</span><p class="hint" style="margin:0">Listed in the WIP sheet (${esc(p.entry)}) but no stage, customer or area is filled in.${p.contractor?' Contractor column: '+esc(p.contractor)+'.':''}</p>`;
   }else if(p.group==='office'){
     h+=`<span class="pill" style="background:#7b8794;color:#fff">Site office · not sold</span><p class="hint" style="margin:0">Marked “Site Office (Not Sold)” on the master layout.</p>`;
   }else{
     if(p.group==='done')h+=`<span class="pill" style="background:${C_DONE};color:#fff">Handover completed</span>
       <p class="hint" style="margin:0">Listed in UTF-HO-VILLAS (26-10-2026)${p.combined?' as '+esc(p.entry):''}.</p>`;
-    else h+=`<span class="pill" style="background:#d6dcd8;color:#18242b">Not in any list</span>
+    else h+=`<span class="pill" style="background:#cbd5e1;color:#18242b">Not in any list</span>
       <p class="hint" style="margin:0">This plot is not in the WIP, not-started, sold or handover lists. See the drawing hatch below and confirm its status.</p>`;
   }
   if(p.group==='wip'&&p.salesstatus)h+=`<dl><dt>Sales status</dt><dd>${esc(p.salesstatus)} · ${esc((SALES[p.sales]||SALES['—'])[0])} (NYT-WIP sheet)</dd></dl>`;
@@ -852,8 +943,8 @@ function renderDaily(){
   const x=i=>pl+i*(W2-pl-pr)/(pts.length-1),y=v=>pt+(H2-pt-pb)*(1-v/max);
   const line=(k,c)=>`<polyline fill="none" stroke="${c}" stroke-width="2.5" points="${pts.map((r,i)=>x(i)+','+y(r[k])).join(' ')}"/>`+pts.map((r,i)=>`<circle cx="${x(i)}" cy="${y(r[k])}" r="3.5" fill="${c}"><title>${r.date}: ${r[k]}</title></circle>`).join('');
   const ticks=[0,.5,1].map(f=>Math.round(max*f));
-  el.innerHTML=`<svg viewBox="0 0 ${W2} ${H2}" width="${W2}" height="${H2}" role="img" aria-label="Daily handed over and under construction counts">${ticks.map(v=>`<line x1="${pl}" x2="${W2-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--rule)"/><text x="${pl-6}" y="${y(v)+4}" font-size="11" text-anchor="end" fill="var(--muted)">${v}</text>`).join('')}${pts.map((r,i)=>`<text x="${x(i)}" y="${H2-8}" font-size="11" text-anchor="middle" fill="var(--muted)">${r.date.slice(8)}/${r.date.slice(5,7)}</text>`).join('')}${line('done','#3f9a68')}${line('wip','#ea8a2c')}</svg>
-  <div style="display:flex;gap:16px;font-size:13px"><span><span class="sw" style="display:inline-block;background:#3f9a68;vertical-align:-2px"></span> Handed over</span><span><span class="sw" style="display:inline-block;background:#ea8a2c;vertical-align:-2px"></span> Under construction</span></div>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W2} ${H2}" width="${W2}" height="${H2}" role="img" aria-label="Daily handed over and under construction counts">${ticks.map(v=>`<line x1="${pl}" x2="${W2-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--rule)"/><text x="${pl-6}" y="${y(v)+4}" font-size="11" text-anchor="end" fill="var(--muted)">${v}</text>`).join('')}${pts.map((r,i)=>`<text x="${x(i)}" y="${H2-8}" font-size="11" text-anchor="middle" fill="var(--muted)">${r.date.slice(8)}/${r.date.slice(5,7)}</text>`).join('')}${line('done','#14a37f')}${line('wip','#3b82f6')}</svg>
+  <div style="display:flex;gap:16px;font-size:13px"><span><span class="sw" style="display:inline-block;background:#14a37f;vertical-align:-2px"></span> Handed over</span><span><span class="sw" style="display:inline-block;background:#3b82f6;vertical-align:-2px"></span> Under construction</span></div>`;
 }
 
 /* ---- data entry (Google Sheet backend) ---- */
