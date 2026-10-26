@@ -45,8 +45,24 @@ h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:
 .hero h1 span{color:var(--accent-2)}
 .hero p{margin:8px 0 0;color:var(--on-hero-muted);max-width:56ch}
 .ringwrap{display:flex;align-items:center;gap:18px}
-.ring{width:168px;height:168px;position:relative;flex:none}
-.ring .seg{cursor:pointer;transition:stroke-width .2s,opacity .2s;outline:none}
+.ring{width:196px;height:196px;position:relative;flex:none}
+.ring svg{overflow:visible}
+.ring .seg,.ring .iseg{transition:stroke-width .25s,opacity .25s,transform .25s cubic-bezier(.3,1.4,.6,1),stroke-dasharray 1.1s cubic-bezier(.2,.8,.2,1);transform-box:view-box;transform-origin:21px 21px}
+.ring .iseg{cursor:pointer;outline:none}
+.ring .iseg:hover,.ring .iseg.act,.ring .iseg:focus-visible{stroke-width:4.4}
+.ring.drill .seg:not(.act){opacity:.25}
+.ring.drill .c{inset:52px}
+.ring.drill .c b{font-size:22px}
+.ringside{display:flex;flex-direction:column;gap:6px;min-width:210px}
+.ringcrumb{font:600 11px var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--on-hero-muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-height:16px}
+.ringcrumb button{all:unset;cursor:pointer;color:#a5f3fc;text-decoration:underline;text-underline-offset:3px}
+.ringcrumb button:focus-visible{outline:2px solid #67e8f9}
+.ringtip{position:fixed;z-index:70;pointer-events:none;background:rgba(15,29,51,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 12px;font:13px/1.35 var(--f-body);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.ringtip b{font:600 14px var(--f-display);display:block}
+.kpi.hl{background:rgba(255,255,255,.26);transform:translateY(-3px);box-shadow:0 0 0 2px rgba(103,232,249,.7),0 1px 0 rgba(255,255,255,.25) inset}
+@keyframes ringPulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+.ring.pulse svg{animation:ringPulse .45s ease}
+.ring .seg{cursor:pointer;outline:none}
 .ring .seg:hover,.ring .seg.act,.ring .seg:focus-visible{stroke-width:6}
 .ring.dimmed .seg:not(.act){opacity:.35}
 .ringleg{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;min-width:190px}
@@ -54,7 +70,7 @@ h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:
 .ringleg button:hover,.ringleg button.act,.ringleg button:focus-visible{background:rgba(255,255,255,.16)}
 .ringleg i{width:10px;height:10px;border-radius:50%}
 .ringleg b{font:600 13px var(--f-display)}
-@media (max-width:1100px){.ringleg{display:none}}
+@media (max-width:1100px){.ringside{display:none}}
 .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .ring .c{all:unset;position:absolute;inset:26px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;color:var(--on-hero)}
 .ring .c:hover{background:rgba(255,255,255,.08)}
@@ -343,10 +359,11 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
     </div>
     <div class="ringwrap">
       <div class="ring" id="ring" role="group" aria-label="Villa status breakdown, click a slice to show it on the map">
-        <svg viewBox="0 0 42 42" id="ringSvg"><circle cx="21" cy="21" r="15.9" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="4.2"/><g id="ringSegs"></g></svg>
+        <svg viewBox="0 0 42 42" id="ringSvg"><circle cx="21" cy="21" r="15.9" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="4.2"/><g id="ringSegs"></g><g id="ringInner"></g></svg>
         <button class="c" id="ringC" aria-label="Show whole site"><b id="ringPct">0%</b><small id="ringLbl">handed over</small><span id="ringSub"></span></button>
       </div>
-      <ul class="ringleg" id="ringLeg"></ul>
+      <div class="ringside"><div class="ringcrumb" id="ringCrumb"></div><ul class="ringleg" id="ringLeg"></ul></div>
+      <div class="ringtip" id="ringTip" hidden></div>
     </div>
     <div class="kpis">
       <button class="kpi" data-go="all"><span class="l"><i style="background:#fff"></i>Total villas</span><b data-count="258">0</b><small>Show whole site</small></button>
@@ -961,37 +978,91 @@ function refreshAll(){
 
 /* ---- lively extras ---- */
 function setMode(m){mode=m;document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.id==='m-'+m))}
-/* ---- interactive status ring ---- */
+/* ---- interactive status ring (drill-down) ---- */
 const RSEG=[['done','Handed over','#5eead4'],['wip','Under construction','#93c5fd'],['sold','Sold · not started','#c4b5fd'],['nyt','Unsold · not started','#e2e8f0'],['other','No status yet','#fbbf24']];
-let ringAct=null,ringHover=null;
-function ringVals(){const o=258-VC.done-VC.wip-VC.sold-VC.nyt;return {done:VC.done,wip:VC.wip,sold:VC.sold,nyt:VC.nyt,other:Math.max(0,o)}}
-function ringCenter(k){const v=ringVals();if(!k){$('#ringPct').textContent=Math.round(v.done/258*100)+'%';$('#ringLbl').textContent='handed over';$('#ringSub').textContent=`${v.done} of 258 villas`;return}
-  const r=RSEG.find(x=>x[0]===k);$('#ringPct').textContent=Math.round(v[k]/258*100)+'%';$('#ringLbl').textContent=r[1];$('#ringSub').textContent=`${v[k]} villas`}
-function renderRing(){
-  const v=ringVals(),C=2*Math.PI*15.9;let off=0;const gap=.6;
-  $('#ringSegs').innerHTML=RSEG.map(([k,l,c])=>{const len=v[k]/258*C;const d=Math.max(0,len-gap);const h=`<circle class="seg${ringAct===k?' act':''}" data-k="${k}" tabindex="0" role="button" aria-label="${l}: ${v[k]} villas" cx="21" cy="21" r="15.9" fill="none" stroke="${c}" stroke-width="4.2" stroke-dasharray="${d} ${C-d}" stroke-dashoffset="${-off}"><title>${l}: ${v[k]}</title></circle>`;off+=len;return v[k]?h:''}).join('');
-  $('#ring').classList.toggle('dimmed',!!ringAct);
-  $('#ringLeg').innerHTML=RSEG.map(([k,l,c])=>`<li><button data-k="${k}" class="${ringAct===k?'act':''}"><i style="background:${c}"></i><span>${l}</span><b>${v[k]}</b></button></li>`).join('');
-  ringCenter(ringHover||ringAct);
+const OTHER_G=['listed','unk','office'];
+const SER_COL={Numbered:'#38bdf8',E:'#818cf8','9':'#2dd4bf','18':'#a78bfa',AX:'#22d3ee',CX:'#60a5fa'};
+let ringAct=null,ringSub=null,ringHover=null,ringDrawn=false;
+function ringVals(){return {done:VC.done,wip:VC.wip,sold:VC.sold,nyt:VC.nyt,other:(VC.listed||0)+(VC.unk||0)+(VC.office||0)}}
+const ringTotal=()=>{const v=ringVals();return v.done+v.wip+v.sold+v.nyt+v.other};
+const villaOf=g=>{const m=new Map();PLOTS.forEach(p=>{const pg=p.fromDrawing?'unk':p.group;if(!(Array.isArray(g)?g.includes(pg):pg===g))return;const k=p.entry||p.id;if(!m.has(k))m.set(k,p)});return [...m.values()]};
+function ringBreak(k){
+  if(k==='wip'){const c={};W.forEach(w=>c[w.stage]=(c[w.stage]||0)+1);return STAGES.filter(st=>c[st]).map((st,_,a)=>{const i=STAGES.indexOf(st);return {key:'s'+i,label:SHORT[st],n:c[st],col:STAGE_COL[i],go:()=>onlyCat('progress','s'+i)}})}
+  if(k==='nyt'){const c={};villaOf('nyt').forEach(p=>{const s2=SALES[p.sales]?p.sales:'—';c[s2]=(c[s2]||0)+1});return Object.keys(c).map(s2=>({key:'sl:'+s2,label:SALES[s2][0],n:c[s2],col:SALES[s2][1],go:()=>onlyCat('sales','sl:'+s2)}))}
+  if(k==='other'){const L=[['listed','In WIP list · no progress','#fde68a'],['unk','Not in any list','#fbbf24'],['office','Site office','#f59e0b']];return L.map(([g,l,c])=>({key:g,label:l,n:villaOf(g).length,col:c,go:()=>onlyCat('progress',g)})).filter(x=>x.n)}
+  const g=k;const c={};villaOf(g).forEach(p=>c[p.series]=(c[p.series]||0)+1);
+  const extra=(k==='done'&&offmapOpen().some(o=>o.group==='done'))?[{key:'off:14B',label:'14B (not on drawing)',n:1,col:'#99f6e4',go:()=>{}}]:[];
+  return extra.concat(SO.filter(x=>c[x]).map(x=>({key:'ser:'+x,label:(x==='Numbered'?'Numbered plots':x+' series'),n:c[x],col:SER_COL[x],go:()=>{ringGo(k,true);zoomSeries(x)}})));
 }
-function ringGo(k){
-  ringAct=(ringAct===k)?null:k;renderRing();
+function zoomSeries(x){const L=PLOTS.filter(p=>p.series===x&&!hidden.has(p.cat));if(!L.length)return;const xs=L.map(p=>p.x/100*IMG_W),ys=L.map(p=>p.y/100*IMG_H);const pad=120;const x0=Math.min(...xs)-pad,x1=Math.max(...xs)+pad,y0=Math.min(...ys)-pad,y1=Math.max(...ys)+pad;
+  requestAnimationFrame(()=>{s=Math.min(vw.clientWidth/(x1-x0),vw.clientHeight/(y1-y0),s0*14);tx=vw.clientWidth/2-(x0+x1)/2*s;ty=vw.clientHeight/2-(y0+y1)/2*s;stage.style.transition='transform .5s cubic-bezier(.2,.8,.2,1)';apply();setTimeout(()=>stage.style.transition='',520);popTiles(L)})}
+function arcs(items,total,r,w,cls){const C=2*Math.PI*r;let off=0;const gap=items.length>1?.5:0;
+  return items.map(it=>{const len=it.n/total*C;const d=Math.max(0,len-gap);const mid=(off+len/2)/C*2*Math.PI;const ex=Math.cos(mid),ey=Math.sin(mid);
+    const h=`<circle class="${cls}" data-k="${esc(it.key)}" data-ex="${ex.toFixed(3)}" data-ey="${ey.toFixed(3)}" tabindex="0" role="button" aria-label="${esc(it.label)}: ${it.n} villas" cx="21" cy="21" r="${r}" fill="none" stroke="${it.col}" stroke-width="${w}" style="stroke-dasharray:${ringDrawn?d:0} ${C};stroke-dashoffset:${-off}" data-d="${d}" data-c="${C}"></circle>`;off+=len;return h}).join('')}
+function renderRing(){
+  const v=ringVals();
+  const top=RSEG.map(([k,l,c])=>({key:k,label:l,n:v[k],col:c})).filter(x=>x.n);
+  $('#ringSegs').innerHTML=arcs(top,ringTotal(),15.9,4.2,'seg');
+  const inner=ringAct?ringBreak(ringAct):[];const tot=inner.reduce((a,b)=>a+b.n,0)||1;
+  $('#ringInner').innerHTML=ringAct?arcs(inner,tot,11.2,3,'iseg'):'';
+  document.querySelectorAll('#ringSegs .seg').forEach(c=>c.classList.toggle('act',c.dataset.k===ringAct));
+  document.querySelectorAll('#ringInner .iseg').forEach(c=>c.classList.toggle('act',c.dataset.k===ringSub));
+  $('#ring').classList.toggle('drill',!!ringAct);$('#ring').classList.toggle('dimmed',!!ringAct);
+  // draw-in
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{document.querySelectorAll('#ring circle[data-d]').forEach(c=>c.style.strokeDasharray=`${c.dataset.d} ${c.dataset.c}`);ringDrawn=true}));
+  // side list + crumb
+  const list=ringAct?inner:top.map(t=>Object.assign({},t));
+  $('#ringLeg').innerHTML=list.map(it=>`<li><button data-k="${esc(it.key)}" class="${(ringAct?ringSub:ringAct)===it.key?'act':''}"><i style="background:${it.col}"></i><span>${esc(it.label)}</span><b>${it.n}</b></button></li>`).join('');
+  const a=RSEG.find(r=>r[0]===ringAct);const sub=inner.find(x=>x.key===ringSub);
+  $('#ringCrumb').innerHTML=ringAct?`<button data-crumb="all">All villas</button><span>›</span>${sub?`<button data-crumb="top">${esc(a[1])}</button><span>›</span><span>${esc(sub.label)}</span>`:`<span>${esc(a[1])}</span>`}`:'<span>All villas · click a slice</span>';
+  ringCenter();
+}
+function ringCenter(hk){
+  const v=ringVals();const set=(pct,l,sub)=>{$('#ringPct').textContent=pct;$('#ringLbl').textContent=l;$('#ringSub').textContent=sub};
+  const inner=ringAct?ringBreak(ringAct):[];
+  const h=hk&&(inner.find(x=>x.key===hk)||RSEG.find(r=>r[0]===hk));
+  if(h&&h.label){const tot=inner.reduce((a,b)=>a+b.n,0)||1;set(Math.round(h.n/tot*100)+'%',h.label,`${h.n} of ${tot}`);return}
+  if(h){set(Math.round(v[h[0]]/258*100)+'%',h[1],h[0]==='other'?`${v[h[0]]} villas · see Summary`:`${v[h[0]]} of 258 villas`);return}
+  const sub=inner.find(x=>x.key===ringSub);
+  if(sub){set(String(sub.n),sub.label,'villas');return}
+  if(ringAct){const a=RSEG.find(r=>r[0]===ringAct);set(String(v[ringAct]),a[1],'click inside to filter')}
+  else set(Math.round(v.done/258*100)+'%','handed over',`${v.done} of 258 villas`);
+}
+function kpiFor(k){return document.querySelector(`.kpi[data-go="${k}"]`)}
+function ringHL(k){document.querySelectorAll('.kpi').forEach(x=>x.classList.remove('hl'));if(k&&kpiFor(k))kpiFor(k).classList.add('hl');
+  document.querySelectorAll('#ring circle[data-k]').forEach(c=>{const on=c.dataset.k===k;const m=c.classList.contains('iseg')?.9:1.4;c.style.transform=on?`translate(${c.dataset.ex*m}px,${c.dataset.ey*m}px)`:''})}
+function ringGo(k,keep){
+  if(!keep){ringAct=(ringAct===k)?null:k;ringSub=null}
+  renderRing();$('#ring').classList.remove('pulse');void $('#ring').offsetWidth;$('#ring').classList.add('pulse');
+  if(keep)return;
   if(!ringAct){hidden.clear();setMode('progress');paint();show('map');requestAnimationFrame(()=>{fit();popTiles(PLOTS)});return}
   if(k==='done')onlyCat('progress','done');
   else if(k==='wip'){setMode('progress');hidden=new Set(['done','ns','office','sold','listed','unk']);paint();show('map');requestAnimationFrame(()=>{fit();popTiles(PLOTS.filter(p=>p.group==='wip'))})}
   else if(k==='sold')onlyCat('progress','sold');
   else if(k==='nyt'){setMode('sales');hidden=new Set(['wip','done','office','sold','listed','unk']);paint();show('map');requestAnimationFrame(()=>{fit();popTiles(PLOTS.filter(p=>p.group==='nyt'))})}
-  else {setMode('progress');hidden=new Set(Object.keys(catMap()).filter(x=>!['listed','unk','office'].includes(x)));paint();show('map');requestAnimationFrame(()=>{fit();popTiles(PLOTS.filter(p=>['listed','unk','office'].includes(p.group)))})}
+  else {setMode('progress');hidden=new Set(Object.keys(catMap()).filter(x=>!OTHER_G.includes(x)));paint();show('map');requestAnimationFrame(()=>{fit();popTiles(PLOTS.filter(p=>OTHER_G.includes(p.group)))})}
 }
-['ringSegs','ringLeg'].forEach(id=>{const el=document.getElementById(id);
-  el.addEventListener('click',e=>{const t=e.target.closest('[data-k]');if(t)ringGo(t.dataset.k)});
-  el.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.dataset.k){e.preventDefault();ringGo(e.target.dataset.k)}});
-  el.addEventListener('mouseover',e=>{const t=e.target.closest('[data-k]');if(t){ringHover=t.dataset.k;ringCenter(ringHover)}});
-  el.addEventListener('mouseout',e=>{ringHover=null;ringCenter(ringAct)});
-  el.addEventListener('focusin',e=>{if(e.target.dataset.k){ringHover=e.target.dataset.k;ringCenter(ringHover)}});
-  el.addEventListener('focusout',()=>{ringHover=null;ringCenter(ringAct)});
+function ringSubGo(key){const it=ringBreak(ringAct).find(x=>x.key===key);if(!it)return;
+  if(ringSub===key){ringSub=null;const a=ringAct;ringAct=null;ringGo(a);return}
+  ringSub=key;it.go();renderRing()}
+function ringPick(t){if(!t||!t.dataset.k)return;const k=t.dataset.k;if(RSEG.some(r=>r[0]===k)&&(!ringAct||t.classList.contains('seg')||!ringAct))ringGo(k);else ringSubGo(k)}
+const tipEl=$('#ringTip');
+function tipShow(t,e){const k=t.dataset.k;const inner=ringAct?ringBreak(ringAct):[];const it=inner.find(x=>x.key===k);const r=RSEG.find(x=>x[0]===k);const v=ringVals();
+  const lab=it?it.label:r?r[1]:'';const n=it?it.n:r?v[k]:0;const tot=it?inner.reduce((a,b)=>a+b.n,0):258;
+  tipEl.innerHTML=`<b>${esc(lab)}</b>${n} villas · ${Math.round(n/tot*100)}%<br><span style="opacity:.7">${it?'Click to show on the map':(ringAct===k?'Click to go back':'Click to break it down')}</span>`;tipEl.hidden=false;tipMove(e)}
+function tipMove(e){if(tipEl.hidden||!e||e.clientX==null)return;tipEl.style.left=Math.min(e.clientX+14,innerWidth-230)+'px';tipEl.style.top=(e.clientY+14)+'px'}
+['ringSegs','ringInner','ringLeg'].forEach(id=>{const el=document.getElementById(id);
+  el.addEventListener('click',e=>{const t=e.target.closest('[data-k]');if(!t)return;if(id==='ringLeg'&&ringAct)ringSubGo(t.dataset.k);else if(id==='ringInner')ringSubGo(t.dataset.k);else ringGo(t.dataset.k)});
+  el.addEventListener('keydown',e=>{if(id==='ringLeg')return;if((e.key==='Enter'||e.key===' ')&&e.target.dataset.k){e.preventDefault();const k=e.target.dataset.k;if(id==='ringInner')ringSubGo(k);else ringGo(k);requestAnimationFrame(()=>{const n=document.querySelector(`#${id} [data-k="${CSS.escape(k)}"]`);if(n)n.focus()})}});
+  el.addEventListener('mouseover',e=>{const t=e.target.closest('[data-k]');if(!t)return;ringHover=t.dataset.k;ringCenter(ringHover);ringHL(ringHover);if(id!=='ringLeg')tipShow(t,e)});
+  el.addEventListener('mousemove',tipMove);
+  el.addEventListener('mouseout',()=>{ringHover=null;ringCenter();ringHL(null);tipEl.hidden=true});
+  el.addEventListener('focusin',e=>{if(e.target.dataset.k){ringCenter(e.target.dataset.k);ringHL(e.target.dataset.k)}});
+  el.addEventListener('focusout',()=>{ringCenter();ringHL(null)});
 });
-document.getElementById('ringC').addEventListener('click',()=>{ringAct='x';ringGo('x')});
+document.querySelectorAll('.kpi').forEach(k=>{const g=k.dataset.go;k.addEventListener('click',()=>{ringSub=null;ringAct=RSEG.some(r=>r[0]===g)?g:null;renderRing()});k.addEventListener('mouseenter',()=>{if(RSEG.some(r=>r[0]===g)){ringCenter(g);ringHL(g)}});k.addEventListener('mouseleave',()=>{ringCenter();ringHL(null)})});
+$('#ringCrumb').addEventListener('click',e=>{const b=e.target.closest('[data-crumb]');if(!b)return;if(b.dataset.crumb==='all'){ringAct='x';ringGo('x')}else{const a=ringAct;ringSub=null;ringAct=null;ringGo(a)}});
+document.getElementById('ringC').addEventListener('click',()=>{if(ringSub){const a=ringAct;ringSub=null;ringAct=null;ringGo(a)}else{ringAct='x';ringGo('x')}});
 function onlyCat(m,key){setMode(m);hidden=new Set(Object.keys(catMap()).filter(k=>k!==key));paint();show('map');requestAnimationFrame(()=>{fit();popTiles(PLOTS.filter(p=>p.cat===key))})}
 function popTiles(list){list.forEach((p,i)=>{p.el.classList.remove('pop');void p.el.offsetWidth;p.el.style.animationDelay=Math.min(i*6,700)+'ms';p.el.classList.add('pop')});setTimeout(()=>list.forEach(p=>{p.el.classList.remove('pop');p.el.style.animationDelay=''}),1400)}
 document.querySelectorAll('.kpi').forEach(k=>k.addEventListener('click',()=>{const g=k.dataset.go;
