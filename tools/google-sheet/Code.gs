@@ -21,6 +21,13 @@ const SHEETS = {
   current: ['plot','villa','series','status','stage','customer','contractor','area','sales','remarks','edited']
 };
 
+/** Run once from the Apps Script editor (select "setup", press Run, allow access). */
+function setup() {
+  Object.keys(SHEETS).forEach(sh);
+  ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('dailySnapshot').timeBased().atHour(21).everyDays(1).inTimezone(TZ).create();
+}
+
 function sh(name) {
   const ss = SpreadsheetApp.openById(SHEET_ID);
   let s = ss.getSheetByName(name);
@@ -123,9 +130,3 @@ function dailySnapshot() {
   }
 }
 
-/** Run once from the Apps Script editor (select "setup", press Run, allow access). */
-function setup() {
-  Object.keys(SHEETS).forEach(sh);
-  ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger('dailySnapshot').timeBased().atHour(21).everyDays(1).inTimezone(TZ).create();
-}
