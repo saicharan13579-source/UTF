@@ -31,7 +31,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-variant-numeric:tabular-nums;font-size:15px;line-height:1.5}
-.wrap{max-width:1400px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1880px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
 h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:.01em}
 .mono{font-family:var(--f-mono)}
 .label{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
@@ -102,7 +102,22 @@ section.panel{padding-top:18px;display:flex;flex-direction:column;gap:18px}
 .chk{display:inline-flex;gap:6px;align-items:center;font-size:14px;cursor:pointer}
 
 .mapgrid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
+@media (min-width:1500px){.mapgrid{grid-template-columns:minmax(0,1fr) 320px 330px}.vlist-box{position:sticky;top:84px}}
+@media (min-width:981px) and (max-width:1499px){.vlist-box{grid-column:1/-1}}
 @media (max-width:980px){.mapgrid{grid-template-columns:1fr}}
+.vlist-box{display:flex;flex-direction:column;gap:10px;min-width:0}
+.vlist-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.vlist-head b{font-family:var(--f-display);font-size:22px;font-weight:700}
+.vlist-box input{width:100%;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--rule-strong);border-radius:12px;background:var(--glass-strong);color:var(--ink)}
+.vlist{list-style:none;margin:0;padding:0;overflow:auto;max-height:min(70vh,700px);display:flex;flex-direction:column;gap:2px}
+@media (min-width:981px) and (max-width:1499px){.vlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));max-height:420px}}
+.vlist .vg{font:600 11px var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:8px 8px 2px;grid-column:1/-1}
+.vlist button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:14px minmax(0,1fr);gap:2px 10px;align-items:center;width:100%;padding:7px 8px;border-radius:10px;cursor:pointer}
+.vlist button:hover,.vlist button.on{background:var(--accent-soft)}
+.vlist button:focus-visible{outline:2px solid var(--accent)}
+.vlist .sw{grid-row:1/3;width:14px;height:14px}
+.vlist .vn{font:600 14px var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vlist .vd{grid-column:2;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .viewer{position:relative;background:var(--canvas);border:1.5px solid var(--ink);height:min(78vh,780px);overflow:hidden;touch-action:none;cursor:grab;user-select:none}
 @media (max-width:980px){.viewer{height:min(62vh,560px)}}
 .viewer.drag{cursor:grabbing}
@@ -387,6 +402,12 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
           <span class="label">Selected plot</span>
           <p class="hint" style="margin:0">Click any plot on the map, or search above, to see villa number, customer, stage, contractor, plot area and sales status.</p>
         </div>
+      </aside>
+      <aside class="box vlist-box" aria-label="Villas shown on the map">
+        <div class="vlist-head"><h3>Villas shown</h3><b id="vlCount">0</b></div>
+        <p class="hint" style="margin:0" id="vlSub">Matches the colours switched on in the legend.</p>
+        <input id="vlq" type="search" placeholder="Filter this list" aria-label="Filter villas shown">
+        <ul class="vlist" id="vlist"></ul>
       </aside>
     </div>
     <p class="hint" style="margin:0">Drag to pan · scroll or pinch to zoom · plot numbers become readable as you zoom in. Dashed tiles have not started construction. A red ! marks a villa whose records disagree.</p>
@@ -683,6 +704,30 @@ PLOTS.forEach(p=>{
 const patDefs=plan.querySelector('#patterns');const patMade={};
 function patFor(col){const id='h'+col.slice(1);if(!patMade[id]){patMade[id]=1;const tc=lum(col)>.38?'rgba(20,30,40,.22)':'rgba(255,255,255,.32)';
   patDefs.insertAdjacentHTML('beforeend',`<pattern id="${id}" width="2.6" height="2.6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="2.6" fill="${col}"/><line x1="0" y1="0" x2="0" y2="2.6" stroke="${tc}" stroke-width=".7"/></pattern>`)}return `url(#${id})`}
+function vDetail(p){
+  if(p.group==='wip')return [SHORT[p.stage],p.customer,p.contractor||'No contractor'].filter(Boolean).join(' · ');
+  if(p.group==='nyt')return 'Not started · '+((SALES[p.sales]||SALES['—'])[0]);
+  if(p.group==='sold')return 'Sold · not started';
+  if(p.group==='listed')return 'In WIP list · no progress';
+  if(p.group==='office')return 'Site office';
+  if(p.group==='done')return 'Handed over';
+  return 'Not in any list';
+}
+function renderVlist(){
+  const el=document.getElementById('vlist');if(!el)return;
+  const cm=catMap();const q=($('#vlq').value||'').trim().toLowerCase();
+  const seen=new Map();
+  PLOTS.forEach(p=>{if(hidden.has(p.cat))return;const k=p.entry||p.id;if(!seen.has(k))seen.set(k,{k,p,plots:[]});seen.get(k).plots.push(p.id)});
+  let items=[...seen.values()];
+  if(q)items=items.filter(v=>[v.k,v.plots.join(' '),vDetail(v.p),v.p.customer,v.p.contractor].join(' ').toLowerCase().includes(q));
+  const order=MODES[mode].cats().filter(c=>c.key).map(c=>c.key);
+  items.sort((a,b)=>order.indexOf(a.p.cat)-order.indexOf(b.p.cat)||String(a.k).localeCompare(String(b.k),undefined,{numeric:true,sensitivity:'base'}));
+  $('#vlCount').textContent=items.length;
+  let last='',h='';
+  items.forEach(v=>{const c=cm[v.p.cat];if(v.p.cat!==last){last=v.p.cat;h+=`<li class="vg">${esc(c?c.label:'')}</li>`}
+    h+=`<li><button data-id="${esc(v.p.id)}" class="${selected&&(selected.entry||selected.id)===v.k?'on':''}"><span class="sw${c&&c.ns?' ns':''}" style="background:${c?c.color:'#ddd'}"></span><span class="vn">${esc(v.k)}${v.plots.length>1?` <span class="muted" style="font-weight:400;font-size:12px">(${v.plots.length} plots)</span>`:''}</span><span class="vd">${esc(vDetail(v.p))}</span></button></li>`});
+  el.innerHTML=h||'<li class="muted" style="padding:8px">No villas match.</li>';
+}
 function paint(){
   const cm=catMap();
   PLOTS.forEach(p=>{const k=MODES[mode].key(p),c=cm[k];p.cat=k;const col=c?c.color:'#ddd';
@@ -691,7 +736,7 @@ function paint(){
     p.el.classList.toggle('dim',hidden.has(k));
     p.el.classList.toggle('flag',p.flag&&$('#showFlags').checked);
   });
-  p_labels();renderLegend();
+  p_labels();renderLegend();renderVlist();
   const v=PLOTS.filter(p=>!hidden.has(p.cat)).length;$('#visCount').textContent=`${v} of ${PLOTS.length} plots showing`;
 }
 function p_labels(){plan.classList.toggle('nolabels',!$('#showLabels').checked);plan.classList.toggle('noarea',!$('#showArea').checked)}
@@ -708,9 +753,11 @@ $('#legNone').onclick=()=>{hidden=new Set(Object.keys(catMap()));paint()};
 ['progress','sales','contractor','drawing'].forEach(m=>$('#m-'+m).onclick=()=>{mode=m;hidden.clear();document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.id==='m-'+m));try{localStorage.setItem('utf-mode',m)}catch(e){}paint();if(selected)showDetail(selected)});
 $('#showLabels').onchange=p_labels;$('#showArea').onchange=p_labels;$('#showFlags').onchange=paint;$('#showHatch').onchange=paint;
 
+$('#vlq').addEventListener('input',renderVlist);
+$('#vlist').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(!b)return;const p=PLOTS.find(q=>q.id===b.dataset.id);if(p){showDetail(p);focusPlot(p,6);renderVlist()}});
 /* ---- detail ---- */
 function showDetail(p){
-  selected=p;PLOTS.forEach(q=>q.el.classList.toggle('sel',q===p));
+  selected=p;PLOTS.forEach(q=>q.el.classList.toggle('sel',q===p));document.querySelectorAll('#vlist button').forEach(b=>{const q=PLOTS.find(x=>x.id===b.dataset.id);b.classList.toggle('on',!!q&&(q.entry||q.id)===(p.entry||p.id))});
   let h=`<span class="label">Selected plot · ${esc(p.series==='Numbered'?'Numbered plots':p.series+' series')}</span><div class="vid">${esc(p.id)}</div>`;
   if(p.group==='wip'){
     const col=STAGE_COL[p.stageIdx];
