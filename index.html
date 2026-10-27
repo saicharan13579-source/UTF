@@ -156,7 +156,7 @@ section.panel{padding-top:18px;display:flex;flex-direction:column;gap:18px}
 #plan{display:block;width:100%;height:100%}
 .plot{cursor:pointer;transform-box:fill-box;transform-origin:center;transition:opacity .2s}
 .plot polygon{stroke:none;stroke-linejoin:round;transition:filter .15s}
-.plot:hover polygon{filter:brightness(1.12)}
+.plot:hover polygon,.plot.vh polygon{filter:brightness(1.12)}
 .plot text{pointer-events:none;font-family:var(--f-display);text-anchor:middle;dominant-baseline:middle}
 .plot .pid{font-weight:700;font-size:4.3px}
 .plot .par{font-size:2.1px;font-weight:500;opacity:.9}
@@ -645,6 +645,9 @@ const SRCOF={done:'ho',wip:'wip',sold:'sold',nyt:'nyt',listed:'listed',office:'n
 const BASEKEYS=['src','stage','customer','contractor','area','bua','sales','status','salesstatus','entry','combined','plotted','wipstage','wipcustomer'];
 PLOTS.forEach(p=>{p.base={};BASEKEYS.forEach(k=>p.base[k]=p[k])});
 let OV=(typeof SEED_OV!=='undefined'&&SEED_OV)||{};
+/* combined villas (2-4 plots = one villa), confirmed list 27-10-2026 */
+const COMBINED=[["18A & 18B",["18A","18B"]],["AX 16 & 23",["AX-16","AX-23"]],["AX 26 & 31",["AX-26","AX-31"]],["AX 27 & 30",["AX-27","AX-30"]],["AX 28 & 29",["AX-28","AX-29"]],["AX 1, 2, 3, 4",["AX-1","AX-2","AX-3","AX-4"]],["AX 18 & 21",["AX-18","AX-21"]],["AX 25 & 32",["AX-25","AX-32"]],["AX 33 & 38",["AX-33","AX-38"]],["E 14 & 23",["E14","E23"]],["E 17 & 20",["E17","E20"]],["E 18 & 19",["E18","E19"]],["E 38 & 39",["E38","E39"]],["E 42 & 43",["E42","E43"]],["E 52 & 53",["E52","E53"]],["E 57, 58 & 59",["E57","E58","E59"]],["E 10 & 27",["E10","E27"]],["1G & 1H",["1G","1H"]],["3A & 4",["3A","4"]],["47 & 48",["47","48"]],["49 & 50",["49","50"]],["66 & 67A",["66","67A"]],["1K & 1L",["1K","1L"]]];
+const VILLA_OF={};COMBINED.forEach(([n,ids])=>ids.forEach(i=>VILLA_OF[i]=n));
 function classify(p){
   BASEKEYS.forEach(k=>p[k]=p.base[k]);p.fromDrawing=false;p.remarks='';
   if(p.src==='wip')p.group='wip';
@@ -655,6 +658,7 @@ function classify(p){
   else if(p.note&&p.note.startsWith('Site Office'))p.group='office';
   else if(p.note&&NOTE_SALES[p.note]){p.group='nyt';p.sales=NOTE_SALES[p.note];p.status='Unsold (per drawing note)';p.plotted='—';p.fromDrawing=true;}
   else p.group='unk';
+  if(VILLA_OF[p.id]){p.entry=VILLA_OF[p.id];p.combined=true}
   const o=OV[p.id];p.ov=o||null;
   if(o){
     if(o.status&&GLABEL[o.status]&&o.status!==p.group){p.group=o.status;p.src=SRCOF[o.status];p.fromDrawing=false;p.wipstage=null;}
@@ -720,12 +724,14 @@ const plan=$('#plan'),NS='http://www.w3.org/2000/svg',tilesEl=plan;
     <g transform="translate(1128,628) rotate(-24)"><rect x="-58" y="-6" width="116" height="12" rx="2" fill="#4d3f96"/><text y="2.4" font-size="5.6" fill="#fff" text-anchor="middle" font-weight="700" font-family="Outfit,Segoe UI,sans-serif" letter-spacing=".4">KOTHAGUDA – CHANDIPPA ROAD</text></g>
     <g transform="translate(1150,660)"><path d="M0,22 L0,4 M-5,10 L0,2 L5,10" stroke="#c62828" stroke-width="2" fill="none" stroke-linecap="round"/><text x="10" y="18" font-size="6" font-weight="700" fill="#1d2633" font-family="Outfit,Segoe UI,sans-serif">MAIN GATE</text></g>
     <g id="plots"></g>
-    <path d="${MAP.lines}" fill="none" stroke="#000000" stroke-width=".7" stroke-linecap="round" pointer-events="none"/>`;
+    <path d="${MAP.lines}" fill="none" stroke="#000000" stroke-width=".7" stroke-linecap="round" pointer-events="none"/>
+    <g id="vlabels" pointer-events="none"></g>`;
   plan.innerHTML=h;
 })();
 const plotsG=plan.querySelector('#plots');
 const gts=a=>(a/121).toFixed(2);
-function plotInner(p){const pts=p.poly.map(q=>q.join(',')).join(' ');const fs=Math.max(2.6,Math.min(4.6,Math.sqrt(p.parea)/6));
+function villaMembers(p){const k=p.entry||p.id;return PLOTS.filter(q=>(q.entry||q.id)===k)}
+function plotInner(p){const pts=p.poly.map(q=>q.join(',')).join(' ');if(p.combined&&villaMembers(p).length>1)return `<polygon points="${pts}"/><circle class="flagdot" cx="${p.cx+7}" cy="${p.cy-5}" r="2.2" fill="#c62828" stroke="#fff" stroke-width=".5"/>`;const fs=Math.max(2.6,Math.min(4.6,Math.sqrt(p.parea)/6));
   return `<polygon points="${pts}"/><text class="pid" x="${p.cx}" y="${p.cy-(p.area&&!p.combined?1.6:0)}" style="font-size:${fs}px">${esc(p.id)}</text>${p.area&&!p.combined?`<text class="par" x="${p.cx}" y="${p.cy+2.1}">${fmt(p.area)} SYD</text><text class="par" x="${p.cx}" y="${p.cy+4.7}">${gts(p.area)} GTS</text>`:''}${!p.area&&p.note?`<text class="par pnote" x="${p.cx}" y="${p.cy+2.6}" font-style="italic">${esc(p.note)}</text>`:''}<circle class="flagdot" cx="${p.cx+7}" cy="${p.cy-5}" r="2.2" fill="#c62828" stroke="#fff" stroke-width=".5"/>`;}
 function renderPlotEl(p){p.el.innerHTML=plotInner(p);p.poly_el=p.el.firstChild;p.txt=p.el.querySelectorAll('text')}
 PLOTS.forEach(p=>{
@@ -759,6 +765,16 @@ function renderVlist(){
     h+=`<li><button data-id="${esc(v.p.id)}" class="${selected&&(selected.entry||selected.id)===v.k?'on':''}"><span class="sw${c&&c.ns?' ns':''}" style="background:${c?c.color:'#ddd'}"></span><span class="vn">${esc(v.k)}${v.plots.length>1?` <span class="muted" style="font-weight:400;font-size:12px">(${v.plots.length} plots)</span>`:''}</span><span class="vd">${esc(vDetail(v.p))}</span></button></li>`});
   el.innerHTML=h||'<li class="muted" style="padding:8px">No villas match.</li>';
 }
+function renderVillaLabels(){
+  const el=document.getElementById('vlabels');if(!el)return;const groups=new Map();
+  PLOTS.forEach(p=>{if(!p.combined)return;const k=p.entry||p.id;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(p)});
+  let h='';const cm=catMap();
+  groups.forEach((ms,k)=>{if(ms.length<2)return;let A=0,X=0,Y=0;ms.forEach(m=>{const a=m.parea||1;A+=a;X+=m.cx*a;Y+=m.cy*a});X/=A;Y/=A;
+    const m0=ms[0];const c=cm[m0.cat];const col=c?c.color:'#ddd';const tc=textOn(col);const dim=ms.every(m=>hidden.has(m.cat));
+    const fs=Math.max(3,Math.min(5.2,Math.sqrt(A)/7));const area=m0.area;
+    h+=`<g opacity="${dim?.18:1}"><text class="pid" x="${X.toFixed(1)}" y="${(Y-(area?1.8:0)).toFixed(1)}" fill="${tc}" style="font-size:${fs.toFixed(2)}px" text-anchor="middle" dominant-baseline="middle" font-weight="700" font-family="Outfit,Segoe UI,sans-serif" paint-order="stroke" stroke="${tc==='#ffffff'?'rgba(0,0,0,.25)':'rgba(255,255,255,.55)'}" stroke-width=".35">${esc(k)}</text>${area?`<text class="par" x="${X.toFixed(1)}" y="${(Y+2.4).toFixed(1)}" fill="${tc}" text-anchor="middle" dominant-baseline="middle" font-family="Outfit,Segoe UI,sans-serif" style="font-size:2.2px">${fmt(area)} SYD · ${gts(area)} GTS</text>`:''}</g>`});
+  el.innerHTML=h;
+}
 function paint(){
   const cm=catMap();
   PLOTS.forEach(p=>{const k=MODES[mode].key(p),c=cm[k];p.cat=k;const col=c?c.color:'#ddd';
@@ -767,7 +783,7 @@ function paint(){
     p.el.classList.toggle('dim',hidden.has(k));
     p.el.classList.toggle('flag',p.flag&&$('#showFlags').checked);
   });
-  p_labels();renderLegend();renderVlist();
+  p_labels();renderLegend();renderVlist();renderVillaLabels();
   const v=PLOTS.filter(p=>!hidden.has(p.cat)).length;$('#visCount').textContent=`${v} of ${PLOTS.length} plots showing`;
 }
 function p_labels(){plan.classList.toggle('nolabels',!$('#showLabels').checked);plan.classList.toggle('noarea',!$('#showArea').checked)}
@@ -788,8 +804,9 @@ $('#vlq').addEventListener('input',renderVlist);
 $('#vlist').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(!b)return;const p=PLOTS.find(q=>q.id===b.dataset.id);if(p){showDetail(p);focusPlot(p,6);renderVlist()}});
 /* ---- detail ---- */
 function showDetail(p){
-  selected=p;PLOTS.forEach(q=>q.el.classList.toggle('sel',q===p));document.querySelectorAll('#vlist button').forEach(b=>{const q=PLOTS.find(x=>x.id===b.dataset.id);b.classList.toggle('on',!!q&&(q.entry||q.id)===(p.entry||p.id))});
-  let h=`<span class="label">Selected plot · ${esc(p.series==='Numbered'?'Numbered plots':p.series+' series')}</span><div class="vid">${esc(p.id)}</div>`;
+  selected=p;{const ms=villaMembers(p);PLOTS.forEach(q=>q.el.classList.toggle('sel',ms.includes(q)))}document.querySelectorAll('#vlist button').forEach(b=>{const q=PLOTS.find(x=>x.id===b.dataset.id);b.classList.toggle('on',!!q&&(q.entry||q.id)===(p.entry||p.id))});
+  const _ms=villaMembers(p);
+  let h=_ms.length>1?`<span class="label">Combined villa · ${_ms.length} plots</span><div class="vid">${esc(p.entry)}</div><p class="hint" style="margin:0">Plots ${esc(_ms.map(q=>q.id).join(', '))} are one villa.</p>`:`<span class="label">Selected plot · ${esc(p.series==='Numbered'?'Numbered plots':p.series+' series')}</span><div class="vid">${esc(p.id)}</div>`;
   if(p.group==='wip'){
     const col=STAGE_COL[p.stageIdx];
     h+=`<span class="pill" style="background:${col};color:${textOn(col)}">Under construction · stage ${p.stageIdx+1} of 8</span>
@@ -798,9 +815,9 @@ function showDetail(p){
       <dt>Next stage</dt><dd>${SHORT[STAGES[p.stageIdx+1]]||'—'}</dd>
       <dt>Customer</dt><dd>${esc(p.customer||'—')}</dd>
       <dt>Contractor</dt><dd>${esc(p.contractor||'Not assigned')}</dd>
-      <dt>${p.combined?'Villa plot area':'Plot area'}</dt><dd class="mono">${fmt(p.area)} sq yd${p.area?' · '+gts(p.area)+' guntas':''}${p.combined?`<br><span class="hint">combined for ${esc(p.entry)}</span>`:''}</dd>
+      <dt>${p.combined?'Villa plot area':'Plot area'}</dt><dd class="mono">${fmt(p.area)} sq yd${p.area?' · '+gts(p.area)+' guntas':''}</dd>
       <dt>Built-up</dt><dd class="mono">${p.bua?fmt(p.bua):'—'}</dd>
-      ${p.combined?`<dt>Tracker entry</dt><dd>${esc(p.entry)} (one villa on combined plots)</dd>`:''}</dl>`;
+      </dl>`;
 
   }else if(p.group==='nyt'){
     const s=SALES[p.sales]||SALES['—'];
@@ -847,9 +864,9 @@ function tipText(p){if(p.group==='wip')return `<b>${esc(p.id)}</b><br>${SHORT[p.
   if(p.group==='sold')return `<b>${esc(p.id)}</b><br>Sold · not started`;
   if(p.group==='listed')return `<b>${esc(p.id)}</b><br>In WIP list · no progress`;
   return `<b>${esc(p.id)}</b><br>${p.group==='done'?'Handover completed':'Not in any list'}${p.note?'<br>'+esc(p.note):''}`}
-tilesEl.addEventListener('pointerover',e=>{const t=e.target.closest('.plot');if(!t||e.pointerType==='touch')return;const p=PLOTS.find(q=>q.el===t);tip.innerHTML=tipText(p);tip.hidden=false});
+tilesEl.addEventListener('pointerover',e=>{const t=e.target.closest('.plot');if(!t||e.pointerType==='touch')return;const p=PLOTS.find(q=>q.el===t);PLOTS.forEach(q=>q.el.classList.remove('vh'));villaMembers(p).forEach(q=>q.el.classList.add('vh'));tip.innerHTML=tipText(p);tip.hidden=false});
 tilesEl.addEventListener('pointermove',e=>{if(tip.hidden)return;const x=Math.min(e.clientX+14,innerWidth-270);tip.style.left=x+'px';tip.style.top=(e.clientY+14)+'px'});
-tilesEl.addEventListener('pointerout',e=>{if(e.target.closest('.plot'))tip.hidden=true});
+tilesEl.addEventListener('pointerout',e=>{if(e.target.closest('.plot')){tip.hidden=true;PLOTS.forEach(q=>q.el.classList.remove('vh'))}});
 
 /* ---- pan / zoom ---- */
 const vw=$('#viewer'),stage=$('#stage');let s0=1,s=1,tx=0,ty=0;
