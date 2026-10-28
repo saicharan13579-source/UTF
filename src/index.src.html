@@ -260,6 +260,21 @@ table.et input:disabled,table.et select:disabled{background:transparent;border-c
 table.et td.v{width:64px}
 table.et .w-villa{width:110px}.et .w-st{width:150px}.et .w-stage{width:150px}.et .w-area{width:90px}.et .w-sales{width:140px}
 table.et tr.dirty td{background:var(--warn-bg)}
+table.et tr.efold td{padding:0;background:color-mix(in srgb,var(--accent) 6%,var(--sheet));border-top:1px solid var(--rule-strong);cursor:pointer}
+table.et tr.efold:hover td{background:color-mix(in srgb,var(--accent) 12%,var(--sheet))}
+table.et tr.efold:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+table.et .ef{position:sticky;left:0;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;max-width:calc(100vw - 80px)}
+table.et .ef b{font:600 15px var(--f-display)}
+table.et .efi{font-size:18px}
+table.et .efn{color:var(--muted)}
+table.et .efs{display:inline-flex;align-items:center;gap:4px;color:var(--ink);font-size:12px}
+table.et .efs b{font:600 12px var(--f-display)}
+table.et .efs{color:var(--muted)}
+table.et .efs i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-left:6px}
+table.et .efe{font-size:12px;color:var(--accent)}
+table.et .efd{font-size:12px;color:#b45309}
+table.et .efc{font-size:18px;color:var(--muted);transition:transform .2s}
+table.et tr.efold.open .efc{transform:rotate(90deg)}
 table.et tr.edited td.v::after{content:" ●";color:var(--accent);font-size:10px}
 .et .when{font-size:11px;color:var(--muted);white-space:nowrap}
 .et .acts{display:flex;gap:6px;white-space:nowrap}
@@ -521,7 +536,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
     <div class="entryhead">
       <div>
         <h2>Data entry</h2>
-        <p class="hint" style="margin:4px 0 0">Change a plot's details and press <b>Save</b>. The master layout, counts and tables update straight away for everyone who opens this page. <b>Reset</b> puts a plot back to the data from the files.</p>
+        <p class="hint" style="margin:4px 0 0">Click a series folder to open its plots, change a plot's details and press <b>Save</b>. The master layout, counts and tables update straight away for everyone who opens this page. <b>Reset</b> puts a plot back to the data from the files.</p>
       </div>
       <div class="pinbox" id="pinbox"><div id="entryState" class="estate">Connecting…</div><div id="pinUi" class="pinui"></div></div>
     </div>
@@ -1248,12 +1263,24 @@ function entryRows(){
   return PLOTS.filter(p=>(!q||[p.id,p.entry,p.customer,p.contractor,p.remarks].join(' ').toLowerCase().includes(q))&&(!se||p.series===se)&&(!st||(st==='needs'?NEEDS(p):(p.fromDrawing?'nyt':p.group)===st))&&(!only||p.ov||dirty.has(p.id)))
     .sort((a,b)=>SO.indexOf(a.series)-SO.indexOf(b.series)||natural(a.id,b.id));
 }
+const ENTRY_OPEN=new Set();const SERL={Numbered:'Number series',E:'E series','9':'9 series','18':'18 series',AX:'AX series',CX:'CX series'};
 function renderEntry(){
   const tb=$('#entryTable').tBodies[0];const rows=entryRows();
   const keep=new Map();[...tb.rows].forEach(tr=>{if(tr.dataset.id&&dirty.has(tr.dataset.id))keep.set(tr.dataset.id,tr)});
   const frag=document.createDocumentFragment();
-  rows.forEach(p=>{let tr=keep.get(p.id);if(!tr){tr=document.createElement('tr');tr.dataset.id=p.id;tr.innerHTML=rowHTML(p)}
-    tr.classList.toggle('dirty',dirty.has(p.id));tr.classList.toggle('edited',!!p.ov);frag.appendChild(tr)});
+  const filtered=!!($('#eq').value.trim()||$('#es').value||$('#est').value||$('#eonly').checked);
+  const bySer=new Map();rows.forEach(p=>{if(!bySer.has(p.series))bySer.set(p.series,[]);bySer.get(p.series).push(p)});
+  bySer.forEach((ps,se)=>{
+    const open=filtered||ENTRY_OPEN.has(se);
+    const all=PLOTS.filter(p=>p.series===se),vk=p=>p.entry||p.id,vil=new Set(all.filter(p=>p.group!=='out').map(vk)).size;
+    const cnt=g=>new Set(all.filter(p=>p.group===g).map(vk)).size;
+    const ed=all.filter(p=>p.ov).length,dt=all.filter(p=>dirty.has(p.id)).length;
+    const h=document.createElement('tr');h.className='efold'+(open?' open':'');h.dataset.ser=se;h.tabIndex=0;h.setAttribute('role','button');h.setAttribute('aria-expanded',open);
+    h.innerHTML=`<td colspan="11"><div class="ef"><span class="efi" aria-hidden="true">${open?'📂':'📁'}</span><b>${esc(SERL[se]||se)}</b><span class="efn">${vil} villas · ${all.length} plots${filtered&&ps.length!==all.length?` · ${ps.length} match`:''}</span><span class="efs" title="Handed over · Under construction · Sold, not started · Not yet started"><i style="background:#5eead4"></i>Handed over <b>${cnt('done')}</b> <i style="background:#93c5fd"></i>Under construction <b>${cnt('wip')}</b> <i style="background:#c4b5fd"></i>Sold <b>${cnt('sold')}</b> <i style="background:#cbd5e1"></i>Not started <b>${cnt('nyt')}</b></span>${ed?`<span class="efe">${ed} edited</span>`:''}${dt?`<span class="efd">${dt} unsaved</span>`:''}<span class="efc" aria-hidden="true">›</span></div></td>`;
+    frag.appendChild(h);
+    ps.forEach(p=>{let tr=keep.get(p.id);if(!tr){tr=document.createElement('tr');tr.dataset.id=p.id;tr.innerHTML=rowHTML(p)}
+      tr.classList.toggle('dirty',dirty.has(p.id));tr.classList.toggle('edited',!!p.ov);tr.hidden=!open;frag.appendChild(tr)});
+  });
   tb.innerHTML='';tb.appendChild(frag);
   if(!rows.length)tb.innerHTML=`<tr><td colspan="11" class="muted">No plots match these filters.</td></tr>`;
   const need=PLOTS.filter(NEEDS).length;
@@ -1298,6 +1325,11 @@ async function savePlot(id){
     EDITS.unshift({plot:id,what:changed.join('; '),at:new Date().toISOString(),by:EDITOR});renderLog(EDITS);renderDaily();return true}
   catch(e){if(prev)OV[id]=prev;else delete OV[id];dirty.set(id,d);refreshAll();toast('Could not save '+id+'. Check the connection and try again.');return false}
 }
+{const tog=e=>{const h=e.target.closest('tr.efold');if(!h)return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();const se=h.dataset.ser;
+  const filtered=!!($('#eq').value.trim()||$('#es').value||$('#est').value||$('#eonly').checked);
+  if(filtered){const open=!h.classList.contains('open');h.classList.toggle('open',open);h.setAttribute('aria-expanded',open);h.querySelector('.efi').textContent=open?'📂':'📁';let n=h.nextElementSibling;while(n&&!n.classList.contains('efold')){n.hidden=!open;n=n.nextElementSibling}return}
+  ENTRY_OPEN.has(se)?ENTRY_OPEN.delete(se):ENTRY_OPEN.add(se);renderEntry()};
+ $('#entryTable').addEventListener('click',tog);$('#entryTable').addEventListener('keydown',tog)}
 $('#entryTable').addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const id=b.closest('tr').dataset.id;const p=PLOTS.find(q=>q.id===id);
   if(b.dataset.act==='map'){hidden.clear();paint();show('map');requestAnimationFrame(()=>{showDetail(p);focusPlot(p,6)});return}
   if(b.dataset.act==='save'){b.disabled=true;b.textContent='Saving…';if(await savePlot(id))toast(`Saved ${id}. The map is updated.`);renderEntry();return}
