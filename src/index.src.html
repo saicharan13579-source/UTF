@@ -237,6 +237,11 @@ td.v{font:600 15px var(--f-display);white-space:nowrap}
 td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 a.btn,button.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1.5px solid var(--ink);color:var(--ink);text-decoration:none;font:600 13px var(--f-display);letter-spacing:.03em;text-transform:uppercase;background:var(--sheet);cursor:pointer}
 a.btn:hover,button.btn:hover{background:var(--accent-soft)}
+/* work progress */
+.wk{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:14px;background:var(--accent-soft)}
+.wkh{display:flex;justify-content:space-between;align-items:baseline}.wkh b{font:700 20px var(--f-display)}
+.wkbar{height:8px;border-radius:999px;background:rgba(15,29,51,.1);overflow:hidden}.wkbar i{display:block;height:100%;border-radius:999px}
+.acts{display:grid;grid-template-columns:repeat(27,1fr);gap:2px}.acts span{height:10px;border-radius:2px;background:rgba(15,29,51,.14)}.acts span.on{background:#14a37f}
 /* data entry */
 .pinbox{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .pinui{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
@@ -353,7 +358,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
 <div class="wrap">
   <header class="hero">
     <div>
-      <span class="eyebrow">Site map &amp; progress portal · data as of 26-10-2026</span>
+      <span class="eyebrow">Site map &amp; progress portal · data as of 27-10-2026</span>
       <h1>UTF<span>.</span></h1>
       <p>Every villa on the master layout, live-coloured by construction stage, sales status or contractor. Tap a number below or any plot on the map to dig in.</p>
     </div>
@@ -392,6 +397,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
         <button id="m-progress" aria-pressed="true">Progress</button>
         <button id="m-sales" aria-pressed="false">Sales</button>
         <button id="m-contractor" aria-pressed="false">Contractor</button>
+        <button id="m-work" aria-pressed="false">Work %</button>
         <button id="m-drawing" aria-pressed="false">Drawing check</button>
       </div>
       <div class="search">
@@ -580,6 +586,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
           <tr><td class="v">UTF_LAYOUT_1</td><td>Master layout with plot numbers, roads, clubhouse and status hatching</td><td class="mono">Oct 2026</td><td><a class="btn" href="UTF_LAYOUT_1.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
           <tr><td class="v">UTF_LAYOUT_1_11</td><td>Clean master layout (plot boundaries and numbers). Plot outlines on the site map are traced from this drawing.</td><td class="mono">26-10-2026</td><td><a class="btn" href="UTF_LAYOUT_1_11.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
           <tr><td class="v">UTF_LAYOUT_1_11.dwg</td><td>CAD source of the master layout. Ask the design team for the latest copy.</td><td class="mono">Oct 2026</td><td class="muted">On request</td></tr>
+          <tr><td class="v">UTF-PROJECT-OVERALL_REPORT</td><td>Project report (Shiva): handover, WIP, NYT, combined villas, work status of 180 villas, 27 stage-wise activities and final-stage targets. Current source for the site.</td><td class="mono">27-10-2026</td><td class="muted">In portal</td></tr>
           <tr><td class="v">UTF-HO-VILLAS</td><td>Handover completed list (114 villas). Shown as “Handed over” on the map.</td><td class="mono">26-10-2026</td><td class="muted">In portal</td></tr>
           <tr><td class="v">WIP / NYT tracker</td><td>WIP-UTF-VILLAS and NYT-WIP sheets, plus sold list confirmed 26-10-2026. Shown on the site map and in the tables.</td><td class="mono">26-10-2026</td><td class="muted">In portal</td></tr>
         </tbody>
@@ -629,11 +636,12 @@ function drawAgrees(p){const h=p.hatch||'none';
 const GROUPS=[['done','Handed over'],['wip','Under construction'],['sold','Sold · not started'],['nyt','Unsold · not started'],['listed','In WIP list · no progress'],['office','Site office'],['unk','Not in any list']];
 const GLABEL=Object.fromEntries(GROUPS);
 const SRCOF={done:'ho',wip:'wip',sold:'sold',nyt:'nyt',listed:'listed',office:'none',unk:'none'};
-const BASEKEYS=['src','stage','customer','contractor','area','bua','sales','status','salesstatus','entry','combined','plotted','wipstage','wipcustomer'];
+const BASEKEYS=['work','acts','final','hold','src','stage','customer','contractor','area','bua','sales','status','salesstatus','entry','combined','plotted','wipstage','wipcustomer'];
 PLOTS.forEach(p=>{p.base={};BASEKEYS.forEach(k=>p.base[k]=p[k])});
 let OV=(typeof SEED_OV!=='undefined'&&SEED_OV)||{};
-/* combined villas (2-4 plots = one villa), confirmed list 27-10-2026 */
-const COMBINED=[["18A & 18B",["18A","18B"]],["AX 16 & 23",["AX-16","AX-23"]],["AX 26 & 31",["AX-26","AX-31"]],["AX 27 & 30",["AX-27","AX-30"]],["AX 28 & 29",["AX-28","AX-29"]],["AX 1, 2, 3, 4",["AX-1","AX-2","AX-3","AX-4"]],["AX 18 & 21",["AX-18","AX-21"]],["AX 25 & 32",["AX-25","AX-32"]],["AX 33 & 38",["AX-33","AX-38"]],["E 14 & 23",["E14","E23"]],["E 17 & 20",["E17","E20"]],["E 18 & 19",["E18","E19"]],["E 38 & 39",["E38","E39"]],["E 42 & 43",["E42","E43"]],["E 52 & 53",["E52","E53"]],["E 57, 58 & 59",["E57","E58","E59"]],["E 10 & 27",["E10","E27"]],["1G & 1H",["1G","1H"]],["3A & 4",["3A","4"]],["47 & 48",["47","48"]],["49 & 50",["49","50"]],["66 & 67A",["66","67A"]],["1K & 1L",["1K","1L"]]];
+/* combined villas (2-4 plots = one villa): Combined Villas sheet + combinations used in the HO / WIP / work-status sheets of the 27-10-2026 report.
+   On the drawing, plot 14 is 14B and CX-12A is CX-13. */
+const COMBINED=[["18A & 18B",["18A","18B"]],["AX 16 & 23",["AX-16","AX-23"]],["AX 26 & 31",["AX-26","AX-31"]],["AX 27 & 30",["AX-27","AX-30"]],["AX 28 & 29",["AX-28","AX-29"]],["AX 1, 2, 3, 4",["AX-1","AX-2","AX-3","AX-4"]],["AX 18 & 21",["AX-18","AX-21"]],["AX 25 & 32",["AX-25","AX-32"]],["AX 33 & 38",["AX-33","AX-38"]],["E 14 & 23",["E14","E23"]],["E 17 & 20",["E17","E20"]],["E 18 & 19",["E18","E19"]],["E 38 & 39",["E38","E39"]],["E 42 & 43",["E42","E43"]],["E 52 & 53",["E52","E53"]],["E 57, 58 & 59",["E57","E58","E59"]],["E 10 & 27",["E10","E27"]],["1G & 1H",["1G","1H"]],["3, 3A & 4",["3","3A","4"]],["47 & 48",["47","48"]],["49 & 50",["49","50"]],["66 & 67A",["66","67A"]],["1K & 1L",["1K","1L"]],["CX 8 & 10",["CX-8","CX-10"]],["69 & 70",["69","70"]],["103 & 104",["103","104"]],["107 & 108",["107","108"]],["14A & 14B",["14","14A"]],["1B & 1E",["1B","1E"]]];
 const PROJECT_TOTAL=250;
 const VILLA_OF={};COMBINED.forEach(([n,ids])=>ids.forEach(i=>VILLA_OF[i]=n));
 /* ---- villa grouping: combined plots count as one villa with one status ---- */
@@ -646,7 +654,7 @@ function villaTokens(str){
   return out;
 }
 const GRANK={done:6,wip:5,sold:4,nyt:3,listed:2,office:1,unk:0};
-const COPY_KEYS=['stage','customer','contractor','area','bua','sales','status','salesstatus','plotted','src','stageIdx','fromDrawing','wipstage','wipcustomer'];
+const COPY_KEYS=['work','acts','final','hold','stage','customer','contractor','area','bua','sales','status','salesstatus','plotted','src','stageIdx','fromDrawing','wipstage','wipcustomer'];
 function groupPass(){
   if(!Object.keys(PLOT_BY_N).length)PLOTS.forEach(p=>PLOT_BY_N[nid(p.id)]=p);
   const par={};const f=a=>{while(par[a]!==a){par[a]=par[par[a]];a=par[a]}return a};
@@ -715,6 +723,8 @@ const MODES={
       contractors.forEach(n=>c.push({key:'c:'+n,label:n,color:conColor(n)}));
       c.push({grp:"Other"});c.push({key:'nyt',label:'Not yet started',color:C_NS,ns:true});c.push({key:'done',label:'Handed over (HO list)',color:C_NEUTRAL});c.push({key:'sold',label:'Sold · construction not started',color:'#c4b5fd',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#bae6fd',ns:true});c.push({key:'unk',label:'Not in any list',color:'#cbd5e1',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});return c},
     key(p){return p.group==='wip'?'c:'+(p.contractor||'Not assigned'):p.group}},
+  work:{title:"Work completed (activities)",cats(){return [{grp:"Work-status sheet, 27 activities"},{key:'w100',label:'100% complete',color:'#14a37f'},{key:'w75',label:'75 – 99%',color:'#2563eb'},{key:'w50',label:'50 – 74%',color:'#60a5fa'},{key:'w25',label:'25 – 49%',color:'#93c5fd'},{key:'w1',label:'1 – 24%',color:'#c7d2fe'},{key:'w0',label:'Not started (0%)',color:'#e2e8f0',ns:true},{grp:"Other"},{key:'wn',label:'Not in work-status sheet',color:'#f1f5f9',ns:true}]},
+    key(p){if(!p.work)return 'wn';const v=p.work.pct||0;return v>=1?'w100':v>=.75?'w75':v>=.5?'w50':v>=.25?'w25':v>0?'w1':'w0'}},
   drawing:{title:"Status marked on drawing",cats(){const c=[{grp:"Hatch on UTF_LAYOUT_1"}];
       Object.entries(HATCH).forEach(([k,[l,col]])=>c.push({key:'h:'+k,label:l,color:col,ns:k==='none'}));
       c.push({grp:"Check"});c.push({key:'mm',label:'Tracker disagrees with drawing',color:'#ff3b30'});return c},
@@ -806,11 +816,11 @@ function paint(){
     p.el.classList.toggle('flag',p.flag&&$('#showFlags').checked);
   });
   p_labels();renderLegend();renderVlist();renderVillaLabels();
-  const v=PLOTS.filter(p=>!hidden.has(p.cat)).length;$('#visCount').textContent=`${v} of ${PLOTS.length} plots showing`;
+  const vk=p=>p.entry||p.id;const v=new Set(PLOTS.filter(p=>!hidden.has(p.cat)).map(vk)).size;$('#visCount').textContent=`${v} of ${new Set(PLOTS.map(vk)).size} villas showing`;
 }
 function p_labels(){plan.classList.toggle('nolabels',!$('#showLabels').checked);plan.classList.toggle('noarea',!$('#showArea').checked)}
 function renderLegend(){
-  const counts={};PLOTS.forEach(p=>counts[p.cat]=(counts[p.cat]||0)+1);
+  const counts={};const _seen=new Set();PLOTS.forEach(p=>{const k=p.cat+'|'+(p.entry||p.id);if(_seen.has(k))return;_seen.add(k);counts[p.cat]=(counts[p.cat]||0)+1});
   $('#legTitle').textContent=MODES[mode].title;
   $('#legend').innerHTML=MODES[mode].cats().map(c=>c.grp?`<div class="grp">${c.grp}</div>`:
     (counts[c.key]?`<button data-k="${esc(c.key)}" aria-pressed="${!hidden.has(c.key)}"><span class="sw${c.ns?' ns':''}" style="background:${c.color}"></span><span>${esc(c.label)}</span><b>${counts[c.key]}</b></button>`:'')).join('');
@@ -819,7 +829,7 @@ $('#legend').addEventListener('click',e=>{const b=e.target.closest('button[data-
 $('#legend').addEventListener('dblclick',e=>{const b=e.target.closest('button[data-k]');if(!b)return;hidden=new Set(Object.keys(catMap()).filter(k=>k!==b.dataset.k));paint()});
 $('#legAll').onclick=()=>{hidden.clear();paint()};
 $('#legNone').onclick=()=>{hidden=new Set(Object.keys(catMap()));paint()};
-['progress','sales','contractor','drawing'].forEach(m=>$('#m-'+m).onclick=()=>{mode=m;hidden.clear();document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.id==='m-'+m));try{localStorage.setItem('utf-mode',m)}catch(e){}paint();if(selected)showDetail(selected)});
+['progress','sales','contractor','work','drawing'].forEach(m=>$('#m-'+m).onclick=()=>{mode=m;hidden.clear();document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.id==='m-'+m));try{localStorage.setItem('utf-mode',m)}catch(e){}paint();if(selected)showDetail(selected)});
 $('#showLabels').onchange=p_labels;$('#showArea').onchange=p_labels;$('#showFlags').onchange=paint;$('#showHatch').onchange=paint;
 
 $('#vlq').addEventListener('input',renderVlist);
@@ -861,7 +871,15 @@ function showDetail(p){
   }
   if(p.group==='wip'&&p.salesstatus)h+=`<dl><dt>Sales status</dt><dd>${esc(p.salesstatus)} · ${esc((SALES[p.sales]||SALES['—'])[0])} (NYT-WIP sheet)</dd></dl>`;
   if((p.group==='done'||p.group==='sold')&&p.wipstage)h+=`<div class="flagnote">Older WIP sheet (24-10-2026) still lists this villa at “${esc(SHORT[p.wipstage]||p.wipstage)}”${p.wipcustomer?' for '+esc(p.wipcustomer):''}. The newer ${p.group==='done'?'handover list':'sold list'} (26-10-2026) is used here.</div>`;
-  if(p.id==='14'||p.id==='14A')h+=`<div class="flagnote">The handover list has “14B”, which is not on the drawing. It may refer to this plot. Confirm.</div>`;
+  if(p.id==='14')h+=`<p class="hint" style="margin:0">Plot 14 on the drawing is 14B in the project report.</p>`;
+  if(p.id==='CX-12A')h+=`<p class="hint" style="margin:0">CX-12A on the drawing is CX-13 in the project report.</p>`;
+  if(p.work){const w=p.work,pc=Math.round((w.pct||0)*100),col=pc>=100?'#14a37f':pc>=75?'#3b82f6':pc>=40?'#60a5fa':pc>0?'#93c5fd':'#cbd5e1';
+    h+=`<div class="wk"><div class="wkh"><span class="label">Work progress</span><b>${pc}%</b></div><div class="wkbar"><i style="width:${pc}%;background:${col}"></i></div>
+      <dl><dt>Current work</dt><dd>${esc(w.cur||'—')}</dd>${w.upto&&!/^No listed/.test(w.upto)?`<dt>Completed up to</dt><dd>${esc(w.upto)}</dd>`:''}${w.next&&!/^Check final/.test(w.next)?`<dt>Next pending</dt><dd>${esc(w.next)}</dd>`:''}<dt>Activities</dt><dd>${w.done??'—'} done · ${w.pend??'—'} pending</dd>${w.crm?`<dt>CRM</dt><dd>${esc(w.crm)}</dd>`:''}${w.rem?`<dt>Remarks</dt><dd>${esc(w.rem)}</dd>`:''}</dl>
+      ${p.acts?`<div class="acts">${DATA.acts.map((a,i)=>`<span class="${p.acts[i]==='C'?'on':''}" title="${esc(a.replace(/\s+/g,' '))}: ${p.acts[i]==='C'?'completed':'pending'}"></span>`).join('')}</div><p class="hint" style="margin:0;font-size:11px">${DATA.acts.length} work activities · filled = completed (hover for name)</p>`:''}</div>`}
+  if(p.final){const f=p.final;h+=`<dl>${f.target?`<dt>Target end</dt><dd>${esc(f.target)}</dd>`:''}${f.cur?`<dt>Final-stage work</dt><dd>${esc(f.cur)}</dd>`:''}${f.snags?`<dt>Snags</dt><dd>${esc(f.snags)}</dd>`:''}${f.pending?`<dt>Other pending</dt><dd>${esc(f.pending)}</dd>`:''}</dl>`}
+  if(p.group==='done'&&p.work&&p.work.pct<1)h+=`<div class="flagnote">Listed as handed over, but the work-status sheet shows ${Math.round(p.work.pct*100)}% of activities complete.</div>`;
+  if(p.hold)h+=`<div class="flagnote">On hold in the WIP sheet.</div>`;
   if(p.note)h+=`<dl><dt>Note on drawing</dt><dd>${esc(p.note)}</dd></dl>`;
   {const hh=HATCH[p.hatch||'none'];h+=`<dl><dt>Drawing hatch</dt><dd><span class="sw" style="display:inline-block;vertical-align:-2px;background:${hh[1]}"></span> ${hh[0]}</dd></dl>`;
    if(!p.drawOk)h+=`<div class="flagnote">The tracker and the master layout disagree for this plot. Confirm which is current.</div>`;}
@@ -880,7 +898,8 @@ function showDetail(p){
 }
 /* ---- tooltip ---- */
 const tip=$('#tip');
-function tipText(p){if(p.group==='wip')return `<b>${esc(p.id)}</b><br>${SHORT[p.stage]}<br>${esc(p.customer||'')}<br><span style="opacity:.75">${esc(p.contractor||'No contractor')}</span>`;
+function tipText(p){const t=tipText0(p);const nm=(p.combined&&p.entry)?`<b>${esc(p.entry)}</b>`:null;return (nm?t.replace(/^<b>[^<]*<\/b>/,nm):t)+(p.work?`<br><span style="opacity:.8">Work ${Math.round((p.work.pct||0)*100)}% · ${esc(p.work.cur||'')}</span>`:'')}
+function tipText0(p){if(p.group==='wip')return `<b>${esc(p.id)}</b><br>${SHORT[p.stage]}<br>${esc(p.customer||'')}<br><span style="opacity:.75">${esc(p.contractor||'No contractor')}</span>`;
   if(p.group==='nyt')return `<b>${esc(p.id)}</b><br>Not yet started<br>${esc((SALES[p.sales]||SALES['—'])[0])}`;
   if(p.group==='office')return `<b>${esc(p.id)}</b><br>Site office (not sold)`;
   if(p.group==='sold')return `<b>${esc(p.id)}</b><br>Sold · not started`;
@@ -939,7 +958,7 @@ tabs.forEach(t=>t.addEventListener('click',()=>show(t.getAttribute('aria-control
 
 /* ---- derived villa view (recomputed on every change) ---- */
 const vkey=p=>p.entry||p.id;
-const OFFMAP=[{villa:'14B',group:'done',series:'Numbered'},Object.assign({group:'wip'},DATA.wip.find(w=>w.villa==='CX13')||{villa:'CX13',series:'CX',stage:STAGES[0]})];
+const OFFMAP=[];
 function offmapOpen(){const keys=new Set(PLOTS.map(p=>nid(vkey(p))));const toks=new Set(PLOTS.flatMap(p=>p.villaTokens||[]));return OFFMAP.filter(o=>!keys.has(nid(o.villa))&&!toks.has(nid(o.villa))&&!PLOTS.some(p=>nid(p.id)===nid(o.villa)))}
 function villasBy(g){const m=new Map();PLOTS.forEach(p=>{const pg=p.fromDrawing?'unk':p.group;if(pg!==g)return;const k=vkey(p);if(!m.has(k))m.set(k,p)});return m}
 let W=[],N=[],VC={};
@@ -976,7 +995,9 @@ function renderSummary(){
   const both=PLOTS.filter(p=>p.group==='wip'&&p.salesstatus).map(p=>p.id);
   const om=offmapOpen();const edited=PLOTS.filter(p=>p.ov).length;
   const li=[];
-  li.push(`Total: ${tv+VC.unk} villas counted against ${PROJECT_TOTAL} (${diff===0?'matches':'difference '+(diff>0?'+':'')+diff}). Fix it in Data entry: give plots a status, or join plots into one villa with the “Villa” field (e.g. “14 & 14A”).`);
+  li.push(`Counted by villa (combined plots = one villa): ${tv+VC.unk} villas on the master layout against the project total of ${PROJECT_TOTAL} (${diff===0?'matches':'difference '+(diff>0?'+':'')+diff}).`);
+  li.push(`Report 27-10-2026, TOTAL-VILLAS sheet: its 250 rows are 242 different villas. Repeated rows: AX24 ×3, E6 ×2, E35 / E-35. Combined villas entered as two rows: 3 + 3A&4, 103 + 104, CX-8 + CX-10, 1B + 1E. Missing from it: 107&108, 69&70, 21, E24, E28 (handed over in the HO sheet), 101 (work-status sheet), and AX-7, AX-8, AX-13, AX-14, AX-15, AX-39 (not in any sheet).`);
+  li.push(`Handover list used: the right-hand HO list (matches the work-status sheet). The left list also has 7, 37, 39 and 56, which the work-status sheet shows as not complete.`);
   if(edited)li.push(`${edited} plots have been updated in Data entry.`);
   if(sup.length)li.push(`Newest list used: ${sup.join(', ')} — the older WIP sheet still lists them under construction.`);
   if(both.length)li.push(`${both.join(', ')} are under construction and still unsold (in both the WIP and NYT-WIP sheets).`);
@@ -1044,7 +1065,7 @@ function ringBreak(k){
   if(k==='other'){const L=[['listed','In WIP list · no progress','#fde68a'],['unk','Not in any list','#fbbf24'],['office','Site office','#f59e0b']];return L.map(([g,l,c])=>({key:g,label:l,n:villaOf(g).length,col:c,go:()=>onlyCat('progress',g)})).filter(x=>x.n)}
   const g=k;const c={};villaOf(g).forEach(p=>c[p.series]=(c[p.series]||0)+1);
   const extra=(k==='done'&&offmapOpen().some(o=>o.group==='done'))?[{key:'off:14B',label:'14B (not on drawing)',n:1,col:'#99f6e4',go:()=>{}}]:[];
-  return extra.concat(SO.filter(x=>c[x]).map(x=>({key:'ser:'+x,label:(x==='Numbered'?'Numbered plots':x+' series'),n:c[x],col:SER_COL[x],go:()=>{ringGo(k,true);zoomSeries(x)}})));
+  return extra.concat(SO.filter(x=>c[x]).map(x=>({key:'ser:'+x,label:(x==='Numbered'?'Number series':x+' series'),n:c[x],col:SER_COL[x],go:()=>{ringGo(k,true);zoomSeries(x)}})));
 }
 function zoomSeries(x){const L=PLOTS.filter(p=>p.series===x&&!hidden.has(p.cat));if(!L.length)return;const xs=L.map(p=>p.x/100*IMG_W),ys=L.map(p=>p.y/100*IMG_H);const pad=120;const x0=Math.min(...xs)-pad,x1=Math.max(...xs)+pad,y0=Math.min(...ys)-pad,y1=Math.max(...ys)+pad;
   requestAnimationFrame(()=>{s=Math.min(vw.clientWidth/(x1-x0),vw.clientHeight/(y1-y0),s0*14);tx=vw.clientWidth/2-(x0+x1)/2*s;ty=vw.clientHeight/2-(y0+y1)/2*s;stage.style.transition='transform .5s cubic-bezier(.2,.8,.2,1)';apply();setTimeout(()=>stage.style.transition='',520);popTiles(L)})}
@@ -1125,8 +1146,8 @@ document.querySelectorAll('.kpi').forEach(k=>k.addEventListener('click',()=>{con
   else {setMode('sales');hidden=new Set(['wip','done','office','sold','listed','unk']);paint();show('map');requestAnimationFrame(()=>{fit();popTiles(PLOTS.filter(p=>p.group==='nyt'))})}
   document.getElementById('map').scrollIntoView({behavior:'smooth',block:'start'})}));
 // series chips: zoom to cluster
-const SER=[['Numbered','Numbered plots'],['E','E series'],['9','9 series'],['18','18 series'],['AX','AX series'],['CX','CX series']];
-$('#chips').insertAdjacentHTML('beforeend',SER.map(([k,l])=>`<button data-s="${k}">${l}<b>${PLOTS.filter(p=>p.series===k).length}</b></button>`).join(''));
+const SER=[['Numbered','Number series'],['E','E series'],['9','9 series'],['18','18 series'],['AX','AX series'],['CX','CX series']];
+$('#chips').insertAdjacentHTML('beforeend',SER.map(([k,l])=>`<button data-s="${k}">${l}<b>${new Set(PLOTS.filter(p=>p.series===k).map(p=>p.entry||p.id)).size}</b></button>`).join(''));
 $('#chips').addEventListener('click',e=>{const b=e.target.closest('button[data-s]');if(!b)return;const L=PLOTS.filter(p=>p.series===b.dataset.s);
   const xs=L.map(p=>p.x/100*IMG_W),ys=L.map(p=>p.y/100*IMG_H);const pad=120;const x0=Math.min(...xs)-pad,x1=Math.max(...xs)+pad,y0=Math.min(...ys)-pad,y1=Math.max(...ys)+pad;
   s=Math.min(vw.clientWidth/(x1-x0),vw.clientHeight/(y1-y0),s0*14);tx=vw.clientWidth/2-(x0+x1)/2*s;ty=vw.clientHeight/2-(y0+y1)/2*s;
