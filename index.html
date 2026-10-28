@@ -271,6 +271,21 @@ table.et tr.edited td.v::after{content:" ●";color:var(--accent);font-size:10px
 .elog b{font-family:var(--f-display)}
 .elog .dayh{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-top:8px;border-bottom:1px solid var(--rule);padding-bottom:3px}
 .elog .when{color:var(--muted);font:12px var(--f-mono)}
+.elog .lday{flex:1 1 100%;min-width:0;border:1px solid var(--glass-edge,var(--rule));border-radius:14px;background:var(--glass,var(--sheet));overflow:hidden}
+.elog .lday summary{list-style:none;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;cursor:pointer}
+.elog .lday summary::-webkit-details-marker{display:none}
+.elog .lday summary:hover{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.elog .ld{font:600 13px var(--f-display);text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.elog .lsum{color:var(--muted);font-size:13px}
+.elog .lchev{margin-left:auto;font-size:18px;color:var(--muted);transition:transform .2s}
+.elog .lday[open] .lchev{transform:rotate(90deg)}
+.elog .lcounts{display:flex;flex-wrap:wrap;gap:8px 18px;padding:0 14px 10px;font-size:13px;color:var(--muted)}
+.elog .lcounts b{color:var(--ink);font-family:var(--f-display)}
+.elog .ltab{margin:0 14px 14px;max-height:420px;overflow:auto}
+.elog .ltab table{width:100%;border-collapse:collapse;font-size:13px}
+.elog .ltab th,.elog .ltab td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+.elog .ltab th{position:sticky;top:0;background:var(--sheet);font-weight:600}
+.elog .ltab td.when{white-space:nowrap}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#14302e;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--rule-strong);font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 24px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -528,7 +543,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
     </div>
     <datalist id="conList"></datalist>
     <div class="box">
-      <h3>Changes by day</h3>
+      <h3>Changes by day</h3><p class="hint" style="margin:-4px 0 10px">Click a date to see every change made that day.</p>
       <ul id="editLog" class="elog"><li class="muted">No changes yet.</li></ul>
     </div>
   </section>
@@ -1322,9 +1337,24 @@ function setState(){const el=$('#entryState'),ui=$('#pinUi');
     $('#pinLock').onclick=()=>{unlocked=false;PINV=null;try{sessionStorage.removeItem('utf-unlock')}catch(e){}dirty.clear();applyWrite();setState();renderEntry()};
   }
 }
+const LOG_OPEN=new Set();
+const istDay=iso=>{try{return new Date(iso).toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})}catch(e){return (iso||'').slice(0,10)}};
+const istTime=iso=>{try{return new Date(iso).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'})}catch(e){return ''}};
 function renderLog(docs){
-  let last='';$('#editLog').innerHTML=docs.length?docs.slice(0,150).map(d=>{const day=(d.at||'').slice(0,10);let h='';if(day!==last){last=day;h=`<li class="dayh">${esc(new Date(day+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}))}</li>`}
-    return h+`<li><span class="when">${esc(fmtWhen(d.at).split(',').pop())}</span><b>${esc(d.plot)}</b><span>${esc(d.what||'')}</span><span class="muted">${esc(d.by||'')}</span></li>`}).join(''):'<li class="muted">No changes yet.</li>';
+  const el=$('#editLog');
+  if(!docs.length){el.innerHTML='<li class="muted">No changes yet.</li>';return}
+  const days=new Map();docs.forEach(d=>{const k=istDay(d.at);if(!days.has(k))days.set(k,[]);days.get(k).push(d)});
+  const pl=n=>n===1?'':'s';
+  el.innerHTML=[...days.entries()].map(([day,ls])=>{
+    const plots=new Set(ls.map(d=>d.plot)).size,who=[...new Set(ls.map(d=>d.by).filter(Boolean))].join(', ');
+    const label=new Date(day+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+    const c=DAILY[day];
+    const counts=c?`<div class="lcounts"><span>Handed over <b>${esc(c.done)}</b></span><span>Under construction <b>${esc(c.wip)}</b></span><span>Sold · not started <b>${esc(c.sold)}</b></span><span>Unsold · not started <b>${esc(c.nyt)}</b></span></div>`:'';
+    const rows=ls.map(d=>{const p=PLOTS.find(q=>q.id===String(d.plot));const v=p&&p.entry&&p.entry!==p.id?p.entry:'';
+      return `<tr><td class="when">${esc(istTime(d.at))}</td><td><b>${esc(d.plot)}</b>${v?`<small class="muted"> · ${esc(v)}</small>`:''}</td><td>${esc(d.what||'')}</td><td class="muted">${esc(d.by||'')}</td></tr>`}).join('');
+    return `<li><details class="lday" data-day="${day}"${LOG_OPEN.has(day)?' open':''}><summary><span class="ld">${esc(label)}</span><span class="lsum">${ls.length} change${pl(ls.length)} · ${plots} plot${pl(plots)}${who?' · '+esc(who):''}</span><span class="lchev" aria-hidden="true">›</span></summary>
+      ${counts}<div class="tablewrap ltab"><table><thead><tr><th>Time</th><th>Plot</th><th>Change</th><th>By</th></tr></thead><tbody>${rows}</tbody></table></div></details></li>`}).join('');
+  el.querySelectorAll('details.lday').forEach(dt=>dt.addEventListener('toggle',()=>{dt.open?LOG_OPEN.add(dt.dataset.day):LOG_OPEN.delete(dt.dataset.day)}));
 }
 canWrite=!!(API&&unlocked);
 setState();renderEntry();renderDaily();renderLog(EDITS);
