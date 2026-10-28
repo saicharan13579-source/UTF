@@ -621,7 +621,7 @@ const SHORT={"Foundation & Structural Works":"Foundation & structure","Block Wor
 /* Own colour code (cool): progress runs ice blue → deep indigo as work advances; teal-green = handed over; dashed slate = not started */
 const STAGE_COL=["#d6f1fe","#a5dcf6","#6fc0ec","#3c9fdc","#2f7bd0","#3b5bc0","#4338a8","#5eead4"];
 const C_DONE="#14a37f", C_NS="#e2e8f0", C_NEUTRAL="#eef2f7";
-const SALES={"Sale Customer Choice":["Customer choice","#7c3aed"],"Open&Plotted":["Open & plotted","#0ea5e9"],"Open&Default":["Open & default","#c026d3"],"Open&Hold":["Open & hold","#64748b"],"Sales Required":["Sales required (drawing)","#14b8a6"],"Ravikanth Reddy":["Ravikanth Reddy (drawing)","#818cf8"],"—":["Not recorded","#94a3b8"]};
+const SALES={"Sale Customer Choice":["Customer choice","#7c3aed"],"Open&Plotted":["Open & plotted","#0ea5e9"],"Open&Default":["Open & default","#c026d3"],"Open&Hold":["Open & hold","#64748b"],"Open&Not Plotted":["Open & not plotted","#f59e0b"],"Sales Required":["Sales required (drawing)","#14b8a6"],"Ravikanth Reddy":["Ravikanth Reddy (drawing)","#818cf8"],"—":["Not recorded","#94a3b8"]};
 const CON_COL=["#2563eb","#06b6d4","#10b981","#8b5cf6","#6366f1","#0ea5e9","#14b8a6","#a855f7","#475569"];
 
 const NOTE_SALES={'Default':'Open&Default','Hold':'Open&Hold','Customer Choice':'Sale Customer Choice','Sales Required':'Sales Required','Ravikanth Reddy':'Ravikanth Reddy'};
@@ -641,12 +641,15 @@ PLOTS.forEach(p=>{p.base={};BASEKEYS.forEach(k=>p.base[k]=p[k])});
 let OV=(typeof SEED_OV!=='undefined'&&SEED_OV)||{};
 /* combined villas (2-4 plots = one villa): Combined Villas sheet + combinations used in the HO / WIP / work-status sheets of the 27-10-2026 report.
    On the drawing, plot 14 is 14B and CX-12A is CX-13. */
-const COMBINED=[["18A & 18B",["18A","18B"]],["AX 16 & 23",["AX-16","AX-23"]],["AX 26 & 31",["AX-26","AX-31"]],["AX 27 & 30",["AX-27","AX-30"]],["AX 28 & 29",["AX-28","AX-29"]],["AX 1, 2, 3, 4",["AX-1","AX-2","AX-3","AX-4"]],["AX 18 & 21",["AX-18","AX-21"]],["AX 25 & 32",["AX-25","AX-32"]],["AX 33 & 38",["AX-33","AX-38"]],["E 14 & 23",["E14","E23"]],["E 17 & 20",["E17","E20"]],["E 18 & 19",["E18","E19"]],["E 38 & 39",["E38","E39"]],["E 42 & 43",["E42","E43"]],["E 52 & 53",["E52","E53"]],["E 57, 58 & 59",["E57","E58","E59"]],["E 10 & 27",["E10","E27"]],["1G & 1H",["1G","1H"]],["3A & 4",["3A","4"]],["47 & 48",["47","48"]],["49 & 50",["49","50"]],["66 & 67A",["66","67A"]],["1K & 1L",["1K","1L"]],["69 & 70",["69","70"]],["107 & 108",["107","108"]],["14A & 14B",["14","14A"]],["1B & 1E",["1B","1E"]]];
+const COMBINED=[["18A & 18B",["18A","18B"]],["AX 16 & 23",["AX-16","AX-23"]],["AX 26 & 31",["AX-26","AX-31"]],["AX 27 & 30",["AX-27","AX-30"]],["AX 28 & 29",["AX-28","AX-29"]],["AX 1, 2, 3, 4",["AX-1","AX-2","AX-3","AX-4"]],["AX 18 & 21",["AX-18","AX-21"]],["AX 25 & 32",["AX-25","AX-32"]],["AX 33 & 38",["AX-33","AX-38"]],["E 14 & 23",["E14","E23"]],["E 17 & 20",["E17","E20"]],["E 18 & 19",["E18","E19"]],["E 38 & 39",["E38","E39"]],["E 42 & 43",["E42","E43"]],["E 52 & 53",["E52","E53"]],["E 57, 58 & 59",["E57","E58","E59"]],["E 10 & 27",["E10","E27"]],["1G & 1H",["1G","1H"]],["3A & 4",["3A","4"]],["47 & 48",["47","48"]],["49 & 50",["49","50"]],["66 & 67A",["66","67A"]],["1K & 1L",["1K","1L"]],["69 & 70",["69","70"]],["107 & 108",["107","108"]],["14A & 14B",["14","14A"]],["1B & 1E",["1B","1E"]],["1A & 1F",["1A","1F"]],["1C & 1D",["1C","1D"]]];
 let PROJECT_TOTAL=250;const REPORT_TOTAL=250;
 /* CX-8 and CX-10 are separate villas (TOTAL-VILLAS lists both; CX-10 is a Ravikanth Reddy plot, 28-10-2026) */
 const SPLIT=new Set(['CX-8','CX-10']);
 /* plots marked "Ravikanth Reddy" on the drawing (confirmed 28-10-2026) */
-const RR=new Set(['AX-7','AX-8','AX-10','AX-11','AX-13','AX-14','AX-15','CX-3','CX-10','CX-17','CX-18','21']);
+const RR=new Set(['AX-7','AX-8','AX-10','AX-11','AX-13','AX-14','AX-15','CX-3','CX-10','CX-17','21']);
+/* site-team instructions of 28-10-2026: these plots take the values in plots_joined.json; site edits made before then are ignored */
+const CONF_AT='2026-10-28T05:15:00Z';
+const CONF=new Set(['CX-18','CX-19','CX-20','CX-21','CX-22','CX-23','CX-24','CX-25','CX-26','CX-27','AX-39','1J','1K','1L','1M','1N','1O','2B','2C','2D','2E','3B','3C','101','40E','1A','1F','1C','1D']);
 const VILLA_OF={};COMBINED.forEach(([n,ids])=>ids.forEach(i=>VILLA_OF[i]=n));
 /* ---- villa grouping: combined plots count as one villa with one status ---- */
 const nid=v=>String(v).toUpperCase().replace(/[\s\-\/]/g,'');
@@ -694,7 +697,7 @@ function classify(p){
   else if(p.note&&NOTE_SALES[p.note]){p.group='nyt';p.sales=NOTE_SALES[p.note];p.status='Unsold (per drawing note)';p.plotted='—';p.fromDrawing=true;}
   else p.group='unk';
   if(VILLA_OF[p.id]){p.entry=VILLA_OF[p.id];p.combined=true}
-  const o=OV[p.id];p.ov=o||null;
+  const o=(OV[p.id]&&!(CONF.has(p.id)&&String(OV[p.id].at||'')<CONF_AT))?OV[p.id]:null;p.ov=o||null;
   if(o){
     if(o.status&&GLABEL[o.status]&&o.status!==p.group&&!(o.status==='unk'&&(p.group==='out'||RR.has(p.id)))){p.group=o.status;p.src=SRCOF[o.status];p.fromDrawing=false;p.wipstage=null;}
     ['stage','customer','contractor','sales'].forEach(k=>{if(o[k]!=null&&o[k]!=='')p[k]=o[k]});
@@ -1007,7 +1010,8 @@ function renderSummary(){
   li.push(`Counted by villa (combined plots = one villa): ${tv+VC.unk} villas on the master layout (${VC.rr} of them Ravikanth Reddy plots) against the report total of ${REPORT_TOTAL} (${diff===0?'matches':'difference '+(diff>0?'+':'')+diff}).`);
   li.push(`Report 27-10-2026, TOTAL-VILLAS sheet: its 250 rows are 242 different villas (AX24 ×3, E6 ×2 and E35 / E-35 repeated; CX-8 + CX-10 and 1B + 1E entered separately although they are combined). The other villas come from the report's HO, WIP, NYT and work-status sheets: 107&108, 69&70, 21, E24, E28 and 101.`);
   li.push(`Combined villas follow the report's Combined Villas sheet plus the combinations written in its HO / WIP / ALL-Villas sheets (69&70, 107&108, 14A&14B, 1B&1E). 3 is its own villa (3A&4 is the combined one), 103 and 104 are two villas, and CX-8 and CX-10 are two villas (as in TOTAL-VILLAS; CX-10 is a Ravikanth Reddy plot). 1E&1F (ALL-Villas sheet) is not used: 1F is unsold in NYT-UTF and 1E is sold with 1B.`);
-  li.push(`Ravikanth Reddy plots (per drawing, confirmed 28-10-2026): AX-7, AX-8, AX-10, AX-11, AX-13, AX-14, AX-15, CX-3, CX-10, CX-17, CX-18 and 21 (21 was on the report's HO list) — counted as not yet started, sales status "Ravikanth Reddy". AX-7, AX-8, AX-13, AX-14 and AX-15 are not in the report's TOTAL-VILLAS sheet. AX-39 is in no sheet of the report and is not counted. CX-6 and CX-12 are in TOTAL-VILLAS with no status sheet, so they count as not yet started.`);
+  li.push(`Ravikanth Reddy plots (per drawing, confirmed 28-10-2026): AX-7, AX-8, AX-10, AX-11, AX-13, AX-14, AX-15, CX-3, CX-10, CX-17 and 21 (21 was on the report's HO list) — counted as not yet started, sales status "Ravikanth Reddy". AX-7, AX-8, AX-13, AX-14 and AX-15 are not in the report's TOTAL-VILLAS sheet. CX-6 and CX-12 are in TOTAL-VILLAS with no status sheet, so they count as not yet started.`);
+  li.push(`Site team, 28-10-2026: CX-18 to CX-27, AX-39 and the unsold plots of the 1, 2 and 3 series (1J, 1K & 1L, 1M, 1N, 1O, 2B–2E, 3B, 3C) are open and not plotted; sold units in those series are unchanged. 1A & 1F and 1C & 1D are combined villas, unsold, customer choice. 101 is sold and handed over. 40E is sold, plotted, customer choice.`);
   li.push(`Handover list used: the right-hand HO list (matches the work-status sheet), plus 56 (left HO list and hatched as handed over on the drawing; its work-status row is blank). 7, 37 and 39 from the left list are still under construction in the Final-stage sheet. 45A, E3, E25 and E35 are handed over with snags still open.`);
   if(edited)li.push(`${edited} plots have been updated in Data entry.`);
   if(sup.length)li.push(`Newest list used: ${sup.join(', ')} — the older WIP sheet still lists them under construction.`);
