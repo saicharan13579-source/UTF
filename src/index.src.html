@@ -1071,7 +1071,7 @@ function makeTable(tbl,rowsFn,render,filter,countEl){
     countEl.textContent=`${r.length} of ${rows.length}`}
   return draw}
 function fillSelect(sel,vals,label,lab){const cur=sel.value;sel.innerHTML=`<option value="">All ${label}</option>`+vals.map(v=>`<option value="${esc(v)}">${esc(lab?lab(v):v)}</option>`).join('');if(vals.includes(cur))sel.value=cur}
-const SO=["Numbered","E","9","18","AX","CX"];const sortS=a=>a.sort((x,y)=>SO.indexOf(x)-SO.indexOf(y));
+const SO=["Numbered","1","2","3","E","9","18","AX","CX"];const sortS=a=>a.sort((x,y)=>SO.indexOf(x)-SO.indexOf(y));
 const drawWip=makeTable($('#wipTable'),()=>W,w=>`<tr data-v="${esc(w.villa)}"><td class="v">${esc(w.villa)}${w.offmap?' <span class="muted" style="font-size:11px">(not on drawing)</span>':''}</td><td>${esc(w.series)}</td><td>${esc(w.customer||'—')}</td><td class="n">${fmt(w.area)}</td><td class="n">${fmt(w.bua)}</td>
   <td><span class="pill" style="background:${STAGE_COL[w.stageIdx]};color:${textOn(STAGE_COL[w.stageIdx])}">${w.stageIdx+1}/8 · ${SHORT[w.stage]}</span></td><td>${w.contractor?esc(w.contractor):'<span class="muted">Not assigned</span>'}</td></tr>`,
   w=>{const q=$('#wq').value.trim().toLowerCase();return(!q||[w.villa,w.customer,w.contractor].join(' ').toLowerCase().includes(q))&&(!$('#ws').value||w.series===$('#ws').value)&&(!$('#wst').value||w.stage===$('#wst').value)&&(!$('#wc').value||(w.contractor||'Not assigned')===$('#wc').value)},$('#wcount'));
@@ -1099,7 +1099,7 @@ function setMode(m){mode=m;document.querySelectorAll('.seg button').forEach(b=>b
 /* ---- interactive status ring (drill-down) ---- */
 const RSEG=[['done','Handed over','#5eead4'],['wip','Under construction','#93c5fd'],['sold','Sold · not started','#c4b5fd'],['nyt','Unsold · not started','#e2e8f0'],['other','No status yet','#fbbf24']];
 const OTHER_G=['listed','unk','office'];
-const SER_COL={Numbered:'#38bdf8',E:'#818cf8','9':'#2dd4bf','18':'#a78bfa',AX:'#22d3ee',CX:'#60a5fa'};
+const SER_COL={Numbered:'#38bdf8','1':'#0ea5e9','2':'#06b6d4','3':'#14b8a6',E:'#818cf8','9':'#2dd4bf','18':'#a78bfa',AX:'#22d3ee',CX:'#60a5fa'};
 let ringAct=null,ringSub=null,ringHover=null,ringDrawn=false;
 function ringVals(){return {done:VC.done,wip:VC.wip,sold:VC.sold,nyt:VC.nyt,other:(VC.listed||0)+(VC.unk||0)+(VC.office||0)}}
 const ringTotal=()=>{const v=ringVals();return v.done+v.wip+v.sold+v.nyt+v.other};
@@ -1191,7 +1191,7 @@ document.querySelectorAll('.kpi').forEach(k=>k.addEventListener('click',()=>{con
   else {setMode('sales');hidden=new Set(['wip','done','office','sold','listed','unk']);paint();show('map');requestAnimationFrame(()=>{fit();popTiles(PLOTS.filter(p=>p.group==='nyt'))})}
   document.getElementById('map').scrollIntoView({behavior:'smooth',block:'start'})}));
 // series chips: zoom to cluster
-const SER=[['Numbered','Number series'],['E','E series'],['9','9 series'],['18','18 series'],['AX','AX series'],['CX','CX series']];
+const SER=[['Numbered','Number series'],['1','1 series'],['2','2 series'],['3','3 series'],['E','E series'],['9','9 series'],['18','18 series'],['AX','AX series'],['CX','CX series']];
 $('#chips').insertAdjacentHTML('beforeend',SER.map(([k,l])=>`<button data-s="${k}">${l}<b>${new Set(PLOTS.filter(p=>p.series===k&&p.group!=='out').map(p=>p.entry||p.id)).size}</b></button>`).join(''));
 $('#chips').addEventListener('click',e=>{const b=e.target.closest('button[data-s]');if(!b)return;const L=PLOTS.filter(p=>p.series===b.dataset.s);
   const xs=L.map(p=>p.x/100*IMG_W),ys=L.map(p=>p.y/100*IMG_H);const pad=120;const x0=Math.min(...xs)-pad,x1=Math.max(...xs)+pad,y0=Math.min(...ys)-pad,y1=Math.max(...ys)+pad;
@@ -1263,7 +1263,7 @@ function entryRows(){
   return PLOTS.filter(p=>(!q||[p.id,p.entry,p.customer,p.contractor,p.remarks].join(' ').toLowerCase().includes(q))&&(!se||p.series===se)&&(!st||(st==='needs'?NEEDS(p):(p.fromDrawing?'nyt':p.group)===st))&&(!only||p.ov||dirty.has(p.id)))
     .sort((a,b)=>SO.indexOf(a.series)-SO.indexOf(b.series)||natural(a.id,b.id));
 }
-const ENTRY_OPEN=new Set();const SERL={Numbered:'Number series',E:'E series','9':'9 series','18':'18 series',AX:'AX series',CX:'CX series'};
+const ENTRY_OPEN=new Set();const SERL={Numbered:'Number series','1':'1 series','2':'2 series','3':'3 series',E:'E series','9':'9 series','18':'18 series',AX:'AX series',CX:'CX series'};
 function renderEntry(){
   const tb=$('#entryTable').tBodies[0];const rows=entryRows();
   const keep=new Map();[...tb.rows].forEach(tr=>{if(tr.dataset.id&&dirty.has(tr.dataset.id))keep.set(tr.dataset.id,tr)});
