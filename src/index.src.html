@@ -280,6 +280,8 @@ table.et tr.efold.open .efc{transform:rotate(90deg)}
 .lsw button:hover{color:var(--accent)}
 .lsw button.on{background:linear-gradient(135deg,#2563eb,#06b6d4);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.3)}
 @media (max-width:560px){.lsw button{font-size:15px;padding:6px 12px}}
+.sumdraw{margin-top:28px;display:flex;flex-direction:column;gap:12px}
+.sumdraw td.mono,.sumdraw td.muted{white-space:nowrap}
 .extempty{align-items:center;text-align:center;padding:60px 18px}.extempty .regicon{font-size:34px}.extempty p{margin:0;color:var(--muted)}
 .reglock{align-items:center;text-align:center;padding:40px 18px}
 .reglock .regicon{font-size:34px}
@@ -436,7 +438,6 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
     <button role="tab" id="tab-nyt" aria-controls="nyt" aria-selected="false">Not yet started</button>
     <button role="tab" id="tab-entry" aria-controls="entry" aria-selected="false">Data entry</button>
     <button role="tab" id="tab-summary" aria-controls="summary" aria-selected="false">Summary</button>
-    <button role="tab" id="tab-drawings" aria-controls="drawings" aria-selected="false">Drawings</button>
     <button role="tab" id="tab-reg" aria-controls="reg" aria-selected="false"><span aria-hidden="true">🔒 </span>UTF Registration Details</button>
   </nav>
 
@@ -626,6 +627,23 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
       <b>Check with the sales and project team</b>
       <ul id="checks"></ul>
     </div>
+    <div class="sumdraw" id="summaryDrawings">
+    <div class="section-title"><h2>Drawings &amp; files</h2><p>Source drawings and data lists behind this site.</p></div>
+    <div class="tablewrap">
+      <table class="t" style="min-width:640px">
+        <thead><tr><th>Drawing / file</th><th>Description</th><th>Date</th><th>Open</th></tr></thead>
+        <tbody>
+          <tr><td class="v">UTF_LAYOUT_1</td><td>Master layout with plot numbers, roads, clubhouse and status hatching</td><td class="mono">Oct 2026</td><td><a class="btn" href="UTF_LAYOUT_1.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
+          <tr><td class="v">UTF_LAYOUT_1_11</td><td>Clean master layout (plot boundaries and numbers). Plot outlines on the site map are traced from this drawing.</td><td class="mono">26-10-2026</td><td><a class="btn" href="UTF_LAYOUT_1_11.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
+          <tr><td class="v">UTF_LAYOUT_1_11.dwg</td><td>CAD source of the master layout. Ask the design team for the latest copy.</td><td class="mono">Oct 2026</td><td class="muted">On request</td></tr>
+          <tr><td class="v">UTF-PROJECT-OVERALL_REPORT</td><td>Project report (Shiva): handover, WIP, NYT, combined villas, work status of 180 villas, 27 stage-wise activities and final-stage targets. Current source for the site.</td><td class="mono">27-10-2026</td><td class="muted">In portal</td></tr>
+          <tr><td class="v">UTF-HO-VILLAS</td><td>Handover completed list (114 villas). Shown as “Handed over” on the map.</td><td class="mono">26-10-2026</td><td class="muted">In portal</td></tr>
+          <tr><td class="v">WIP / NYT tracker</td><td>WIP-UTF-VILLAS and NYT-WIP sheets, plus sold list confirmed 26-10-2026. Shown on the site map and in the tables.</td><td class="mono">26-10-2026</td><td class="muted">In portal</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">New drawings (architecture, structure, MEP, landscape) can be added here villa by villa as they are issued.</p>
+    </div>
   </section>
 
   <!-- EXTENSION LAYOUT -->
@@ -662,24 +680,6 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
     </div>
   </section>
 
-  <!-- DRAWINGS -->
-  <section class="panel" id="drawings" role="tabpanel" aria-labelledby="tab-drawings" hidden>
-    <div class="section-title"><h2>Drawings &amp; files</h2><p>Source drawings and data lists behind this site.</p></div>
-    <div class="tablewrap">
-      <table class="t" style="min-width:640px">
-        <thead><tr><th>Drawing / file</th><th>Description</th><th>Date</th><th>Open</th></tr></thead>
-        <tbody>
-          <tr><td class="v">UTF_LAYOUT_1</td><td>Master layout with plot numbers, roads, clubhouse and status hatching</td><td class="mono">Oct 2026</td><td><a class="btn" href="UTF_LAYOUT_1.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
-          <tr><td class="v">UTF_LAYOUT_1_11</td><td>Clean master layout (plot boundaries and numbers). Plot outlines on the site map are traced from this drawing.</td><td class="mono">26-10-2026</td><td><a class="btn" href="UTF_LAYOUT_1_11.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
-          <tr><td class="v">UTF_LAYOUT_1_11.dwg</td><td>CAD source of the master layout. Ask the design team for the latest copy.</td><td class="mono">Oct 2026</td><td class="muted">On request</td></tr>
-          <tr><td class="v">UTF-PROJECT-OVERALL_REPORT</td><td>Project report (Shiva): handover, WIP, NYT, combined villas, work status of 180 villas, 27 stage-wise activities and final-stage targets. Current source for the site.</td><td class="mono">27-10-2026</td><td class="muted">In portal</td></tr>
-          <tr><td class="v">UTF-HO-VILLAS</td><td>Handover completed list (114 villas). Shown as “Handed over” on the map.</td><td class="mono">26-10-2026</td><td class="muted">In portal</td></tr>
-          <tr><td class="v">WIP / NYT tracker</td><td>WIP-UTF-VILLAS and NYT-WIP sheets, plus sold list confirmed 26-10-2026. Shown on the site map and in the tables.</td><td class="mono">26-10-2026</td><td class="muted">In portal</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="hint">New drawings (architecture, structure, MEP, landscape) can be added here villa by villa as they are issued.</p>
-  </section>
 
   <footer>
     <span>UTF · Site portal</span>
@@ -1506,6 +1506,6 @@ document.querySelectorAll('[data-lsw]').forEach(b=>b.addEventListener('click',()
 document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.id==='m-'+mode));
 paint();
 let start='map';const h=(location.hash||'').slice(1);
-if(['map','ext','wip','nyt','entry','summary','drawings','reg'].includes(h))start=h;else{try{const t=localStorage.getItem('utf-tab');if(t&&document.getElementById(t))start=t}catch(e){}}
+if(['map','ext','wip','nyt','entry','summary','reg'].includes(h))start=h;else{try{const t=localStorage.getItem('utf-tab');if(t&&document.getElementById(t))start=t}catch(e){}}
 show(start);requestAnimationFrame(()=>{fit();if(vw.clientWidth<700)zoomAt(2.2,vw.clientWidth*0.45,vw.clientHeight*0.55);if(!RM)popTiles(PLOTS)});
 </script>
