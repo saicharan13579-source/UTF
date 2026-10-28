@@ -457,7 +457,6 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
 
   <nav class="tabs" role="tablist" aria-label="Portal sections">
     <button role="tab" id="tab-map" aria-controls="map" aria-selected="true">Site map</button>
-    <button role="tab" id="tab-ext" aria-controls="ext" aria-selected="false">Extension layout</button>
     <button role="tab" id="tab-wip" aria-controls="wip" aria-selected="false">Under construction</button>
     <button role="tab" id="tab-nyt" aria-controls="nyt" aria-selected="false">Not yet started</button>
     <button role="tab" id="tab-entry" aria-controls="entry" aria-selected="false">Data entry</button>
@@ -679,7 +678,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
   </section>
 
   <!-- EXTENSION LAYOUT -->
-  <section class="panel" id="ext" role="tabpanel" aria-labelledby="tab-ext" hidden>
+  <section class="panel" id="ext" role="tabpanel" aria-labelledby="tab-map" hidden>
     <div class="section-title"><div class="lsw" role="group" aria-label="Layout"><button aria-pressed="false" data-lsw="map">Master layout</button><button class="on" aria-pressed="true" data-lsw="ext">Extension layout</button></div><p>UTF expected extension layout · drawing 28-10-2026. Scroll or pinch to zoom, drag to move.</p></div>
     <div class="extareas">
       <div class="xa new"><span class="label">Extension plots</span><b>23,051 <small>sq yd</small></b><span>32 plots · about 4.8 acres</span></div>
@@ -1113,7 +1112,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.search'))sugg.hidde
 
 /* ---- tabs ---- */
 const tabs=[...document.querySelectorAll('[role=tab]')];
-function show(id){tabs.forEach(t=>{const on=t.getAttribute('aria-controls')===id;t.setAttribute('aria-selected',on);document.getElementById(t.getAttribute('aria-controls')).hidden=!on});if(id==='map')requestAnimationFrame(()=>{if(!s||s===1)fit()});try{localStorage.setItem('utf-tab',id)}catch(e){}}
+function show(id){const tabFor=id==='ext'?'map':id;document.querySelectorAll('section.panel').forEach(p=>p.hidden=p.id!==id);tabs.forEach(t=>t.setAttribute('aria-selected',t.getAttribute('aria-controls')===tabFor));if(id==='map')requestAnimationFrame(()=>{if(!s||s===1)fit()});try{localStorage.setItem('utf-tab',id)}catch(e){}}
 tabs.forEach(t=>t.addEventListener('click',()=>show(t.getAttribute('aria-controls'))));
 
 /* ---- derived villa view (recomputed on every change) ---- */
