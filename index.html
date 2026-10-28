@@ -284,6 +284,13 @@ table.et tr.efold.open .efc{transform:rotate(90deg)}
 .elog .ldl{padding:0 14px 10px}
 .sumdraw{margin-top:28px;display:flex;flex-direction:column;gap:12px}
 .sumdraw td.mono,.sumdraw td.muted{white-space:nowrap}
+.extwrap{display:flex;flex-direction:column;gap:10px}
+.extview{position:relative;height:min(78vh,820px);overflow:hidden;border-radius:18px;background:#fff;border:1px solid var(--glass-edge,var(--rule));cursor:grab;touch-action:none;box-shadow:var(--shadow,0 8px 30px rgba(15,23,42,.08))}
+.extview.drag{cursor:grabbing}
+.extview img{position:absolute;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;max-width:none}
+.extctl{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:6px}
+.extctl .btn{min-width:38px}
+.extbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .extempty{align-items:center;text-align:center;padding:60px 18px}.extempty .regicon{font-size:34px}.extempty p{margin:0;color:var(--muted)}
 .reglock{align-items:center;text-align:center;padding:40px 18px}
 .reglock .regicon{font-size:34px}
@@ -645,6 +652,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
         <tbody>
           <tr><td class="v">UTF_LAYOUT_1</td><td>Master layout with plot numbers, roads, clubhouse and status hatching</td><td class="mono">Oct 2026</td><td><a class="btn" href="UTF_LAYOUT_1.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
           <tr><td class="v">UTF_LAYOUT_1_11</td><td>Clean master layout (plot boundaries and numbers). Plot outlines on the site map are traced from this drawing.</td><td class="mono">26-10-2026</td><td><a class="btn" href="UTF_LAYOUT_1_11.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
+          <tr><td class="v">UTF_EXPECTED_EXTENSION_LAYOUT</td><td>Expected extension layout (shown in the Extension layout tab)</td><td class="mono">28-10-2026</td><td><a class="btn" href="UTF_EXPECTED_EXTENSION_LAYOUT.pdf" target="_blank" rel="noopener">PDF</a></td></tr>
           <tr><td class="v">UTF_LAYOUT_1_11.dwg</td><td>CAD source of the master layout. Ask the design team for the latest copy.</td><td class="mono">Oct 2026</td><td class="muted">On request</td></tr>
           <tr><td class="v">UTF-PROJECT-OVERALL_REPORT</td><td>Project report (Shiva): handover, WIP, NYT, combined villas, work status of 180 villas, 27 stage-wise activities and final-stage targets. Current source for the site.</td><td class="mono">27-10-2026</td><td class="muted">In portal</td></tr>
           <tr><td class="v">UTF-HO-VILLAS</td><td>Handover completed list (114 villas). Shown as “Handed over” on the map.</td><td class="mono">26-10-2026</td><td class="muted">In portal</td></tr>
@@ -658,8 +666,14 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
 
   <!-- EXTENSION LAYOUT -->
   <section class="panel" id="ext" role="tabpanel" aria-labelledby="tab-ext" hidden>
-    <div class="section-title"><div class="lsw" role="group" aria-label="Layout"><button aria-pressed="false" data-lsw="map">Master layout</button><button class="on" aria-pressed="true" data-lsw="ext">Extension layout</button></div><p>Layout of the UTF extension.</p></div>
-    <div class="box extempty" id="extBody"><div class="regicon" aria-hidden="true">🗺️</div><p>The extension layout drawing will be shown here.</p></div>
+    <div class="section-title"><div class="lsw" role="group" aria-label="Layout"><button aria-pressed="false" data-lsw="map">Master layout</button><button class="on" aria-pressed="true" data-lsw="ext">Extension layout</button></div><p>UTF expected extension layout · drawing 28-10-2026. Scroll or pinch to zoom, drag to move.</p></div>
+    <div class="extwrap">
+      <div class="extview" id="extView" tabindex="0" aria-label="Extension layout drawing, zoomable">
+        <img id="extImg" src="extension_layout_s.webp" data-full="extension_layout.webp" alt="UTF expected extension layout" draggable="false">
+        <div class="extctl"><button class="btn sm" id="extIn" aria-label="Zoom in">+</button><button class="btn sm" id="extOut" aria-label="Zoom out">−</button><button class="btn sm" id="extFit">Fit</button></div>
+      </div>
+      <div class="extbar"><a class="btn sm" href="UTF_EXPECTED_EXTENSION_LAYOUT.pdf" target="_blank" rel="noopener">Open PDF</a><a class="btn sm" href="extension_layout.webp" download="UTF_extension_layout.webp">Download image</a><span class="hint" style="margin:0">Source: UTF_EXPECTED_EXTENSION_LAYOUT.pdf (AutoCAD, 28-10-2026)</span></div>
+    </div>
   </section>
 
   <!-- REGISTRATION (private, own PIN; data only comes from the sheet after the PIN is checked) -->
@@ -1567,6 +1581,25 @@ const logRow=d=>{const p=PLOTS.find(q=>q.id===String(d.plot));return [istDay(d.a
 $('#dlLog').onclick=()=>{csvDownload(`UTF_change_log_${stamp()}.csv`,LOG_HEAD,EDITS.map(logRow));toast(`Downloaded ${EDITS.length} changes.`)};
 $('#editLog').addEventListener('click',e=>{const b=e.target.closest('[data-dlday]');if(!b)return;e.preventDefault();const day=b.dataset.dlday;
   const L=EDITS.filter(d=>istDay(d.at)===day);csvDownload(`UTF_changes_${day.split('-').reverse().join('-')}.csv`,LOG_HEAD,L.map(logRow));toast(`Downloaded ${L.length} changes for this day.`)});
+
+/* ---- extension layout viewer: zoom + pan ---- */
+(()=>{const V=$('#extView'),I=$('#extImg');let z=1,x=0,y=0,W=4678,H=3306,fitZ=1,full=false;
+  const ap=()=>{I.style.width=W+'px';I.style.height=H+'px';I.style.transform=`translate(${x}px,${y}px) scale(${z})`};
+  const fit=()=>{const r=V.getBoundingClientRect();if(!r.width)return;fitZ=Math.min(r.width/W,r.height/H);z=fitZ;x=(r.width-W*z)/2;y=(r.height-H*z)/2;ap()};
+  const zoomAt=(f,cx,cy)=>{const nz=Math.max(fitZ*0.8,Math.min(fitZ*14,z*f));x=cx-(cx-x)*nz/z;y=cy-(cy-y)*nz/z;z=nz;ap();if(!full&&z>fitZ*1.6){full=true;I.src=I.dataset.full}};
+  V.addEventListener('wheel',e=>{e.preventDefault();const r=V.getBoundingClientRect();zoomAt(e.deltaY<0?1.2:1/1.2,e.clientX-r.left,e.clientY-r.top)},{passive:false});
+  const pts=new Map();let last=null,pinch=null;
+  V.addEventListener('pointerdown',e=>{if(e.target.closest('.extctl'))return;V.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);V.classList.add('drag');last=[e.clientX,e.clientY];pinch=null});
+  V.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,[e.clientX,e.clientY]);const r=V.getBoundingClientRect();
+    if(pts.size===2){const [a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);const c=[(a[0]+b[0])/2-r.left,(a[1]+b[1])/2-r.top];if(pinch)zoomAt(d/pinch,c[0],c[1]);pinch=d;return}
+    if(last){x+=e.clientX-last[0];y+=e.clientY-last[1];last=[e.clientX,e.clientY];ap()}});
+  const up=e=>{pts.delete(e.pointerId);if(!pts.size){V.classList.remove('drag');last=null;pinch=null}};V.addEventListener('pointerup',up);V.addEventListener('pointercancel',up);
+  V.addEventListener('dblclick',e=>{const r=V.getBoundingClientRect();zoomAt(2,e.clientX-r.left,e.clientY-r.top)});
+  const mid=f=>{const r=V.getBoundingClientRect();zoomAt(f,r.width/2,r.height/2)};
+  $('#extIn').onclick=()=>mid(1.4);$('#extOut').onclick=()=>mid(1/1.4);$('#extFit').onclick=fit;
+  V.addEventListener('keydown',e=>{if(e.key==='+'||e.key==='=')mid(1.4);else if(e.key==='-')mid(1/1.4);else if(e.key==='0')fit()});
+  new ResizeObserver(()=>{if(!V.offsetWidth)return;if(Math.abs(z-fitZ)<1e-6||!V.dataset.init){V.dataset.init=1;fit()}}).observe(V);
+  ap();})();
 /* ---- start ---- */
 document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.id==='m-'+mode));
 paint();
