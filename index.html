@@ -280,6 +280,8 @@ table.et tr.efold.open .efc{transform:rotate(90deg)}
 .lsw button:hover{color:var(--accent)}
 .lsw button.on{background:linear-gradient(135deg,#2563eb,#06b6d4);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.3)}
 @media (max-width:560px){.lsw button{font-size:15px;padding:6px 12px}}
+.dlbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 12px;padding:0 4px}
+.elog .ldl{padding:0 14px 10px}
 .sumdraw{margin-top:28px;display:flex;flex-direction:column;gap:12px}
 .sumdraw td.mono,.sumdraw td.muted{white-space:nowrap}
 .extempty{align-items:center;text-align:center;padding:60px 18px}.extempty .regicon{font-size:34px}.extempty p{margin:0;color:var(--muted)}
@@ -571,6 +573,13 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
       <span class="count" id="ecount"></span>
       <button class="btn" id="saveAll" disabled>Save all changes</button>
     </div>
+    <div class="dlbar">
+      <span class="label">Download</span>
+      <button class="btn sm" id="dlAll" title="Every plot as it stands now, with all changes">All plots (as of now)</button>
+      <button class="btn sm" id="dlShown" title="Only the plots matching the filters above">Plots shown</button>
+      <button class="btn sm" id="dlLog" title="Every change ever saved: date, time, plot, change, by">Change log</button>
+      <span class="hint" style="margin:0">CSV files that open in Excel.</span>
+    </div>
     <div class="tablewrap">
       <table class="t et" id="entryTable">
         <thead><tr>
@@ -581,7 +590,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
     </div>
     <datalist id="conList"></datalist>
     <div class="box">
-      <h3>Changes by day</h3><p class="hint" style="margin:-4px 0 10px">Click a date to see every change made that day.</p>
+      <h3>Changes by day</h3><p class="hint" style="margin:-4px 0 10px">Click a date to see every change made that day. Each day can be downloaded on its own.</p>
       <ul id="editLog" class="elog"><li class="muted">No changes yet.</li></ul>
     </div>
   </section>
@@ -1447,7 +1456,7 @@ function renderLog(docs){
     const rows=ls.map(d=>{const p=PLOTS.find(q=>q.id===String(d.plot));const v=p&&p.entry&&p.entry!==p.id?p.entry:'';
       return `<tr><td class="when">${esc(istTime(d.at))}</td><td><b>${esc(d.plot)}</b>${v?`<small class="muted"> · ${esc(v)}</small>`:''}</td><td>${esc(d.what||'')}</td><td class="muted">${esc(d.by||'')}</td></tr>`}).join('');
     return `<li><details class="lday" data-day="${day}"${LOG_OPEN.has(day)?' open':''}><summary><span class="ld">${esc(label)}</span><span class="lsum">${ls.length} change${pl(ls.length)} · ${plots} plot${pl(plots)}${who?' · '+esc(who):''}</span><span class="lchev" aria-hidden="true">›</span></summary>
-      ${counts}<div class="tablewrap ltab"><table><thead><tr><th>Time</th><th>Plot</th><th>Change</th><th>By</th></tr></thead><tbody>${rows}</tbody></table></div></details></li>`}).join('');
+      ${counts}<div class="ldl"><button class="btn sm" data-dlday="${day}">Download this day</button></div><div class="tablewrap ltab"><table><thead><tr><th>Time</th><th>Plot</th><th>Change</th><th>By</th></tr></thead><tbody>${rows}</tbody></table></div></details></li>`}).join('');
   el.querySelectorAll('details.lday').forEach(dt=>dt.addEventListener('toggle',()=>{dt.open?LOG_OPEN.add(dt.dataset.day):LOG_OPEN.delete(dt.dataset.day)}));
 }
 canWrite=!!(API&&unlocked);
@@ -1521,6 +1530,21 @@ try{const s=JSON.parse(sessionStorage.getItem('utf-reg')||'null');if(s&&s.pin){R
 regSetState();
 
 document.querySelectorAll('[data-lsw]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.lsw)));
+
+/* ---- downloads (CSV, opens in Excel) ---- */
+function csvDownload(name,head,rows){const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;const csv=[head.map(q).join(',')].concat(rows.map(r=>r.map(q).join(','))).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000)}
+const stamp=()=>{const d=new Date();const p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}-${p(d.getMonth()+1)}-${d.getFullYear()}_${p(d.getHours())}${p(d.getMinutes())}`};
+const PLOT_HEAD=['Plot','Villa','Series','Status','Stage','Customer','Contractor','Plot area (sq yd)','Sales status','Plotted','Work done %','Remarks','Last change','Changed by'];
+const plotRow=p=>[p.id,p.entry||p.id,SERL[p.series]||p.series,GLABEL[p.group]||p.group,p.group==='wip'?p.stage:'',p.customer||'',p.contractor||'',p.area??'',(SALES[p.sales]||[p.sales||''])[0]||'',p.plotted||'',p.work&&p.work.pct!=null?Math.round(p.work.pct*100)+'%':'',p.remarks||'',p.ov?fmtWhen(p.ov.at):'From files',p.ov?(p.ov.by||''):''];
+const sortPlots=L=>L.slice().sort((a,b)=>SO.indexOf(a.series)-SO.indexOf(b.series)||natural(a.id,b.id));
+$('#dlAll').onclick=()=>{csvDownload(`UTF_all_plots_${stamp()}.csv`,PLOT_HEAD,sortPlots(PLOTS).map(plotRow));toast('Downloaded all plots.')};
+$('#dlShown').onclick=()=>{const L=entryRows();csvDownload(`UTF_plots_shown_${stamp()}.csv`,PLOT_HEAD,L.map(plotRow));toast(`Downloaded ${L.length} plots.`)};
+const LOG_HEAD=['Date','Time','Plot','Villa','Change','Changed by'];
+const logRow=d=>{const p=PLOTS.find(q=>q.id===String(d.plot));return [istDay(d.at).split('-').reverse().join('-'),istTime(d.at),d.plot,p?(p.entry||p.id):'',d.what||'',d.by||'']};
+$('#dlLog').onclick=()=>{csvDownload(`UTF_change_log_${stamp()}.csv`,LOG_HEAD,EDITS.map(logRow));toast(`Downloaded ${EDITS.length} changes.`)};
+$('#editLog').addEventListener('click',e=>{const b=e.target.closest('[data-dlday]');if(!b)return;e.preventDefault();const day=b.dataset.dlday;
+  const L=EDITS.filter(d=>istDay(d.at)===day);csvDownload(`UTF_changes_${day.split('-').reverse().join('-')}.csv`,LOG_HEAD,L.map(logRow));toast(`Downloaded ${L.length} changes for this day.`)});
 /* ---- start ---- */
 document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.id==='m-'+mode));
 paint();
