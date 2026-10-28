@@ -738,7 +738,7 @@ const HATCH={handover:['Handed over','#3f9a68'],ready:['Ready to hand over','#e9
 const EXPECT={'Foundation & Structural Works':['struct','roof'],'Block Work':['bw'],'Plastering Work':['bw'],'Tiling Work':['finish'],'Doors and Windows Work':['finish'],'Painting Work':['finish'],'External Development':['finish','ready'],'Ready to Handover':['ready']};
 /* plots checked on site 28-10-2026: the tracker is right and the old hatched drawing is out of date */
 const DRAW_CHECKED=new Set(['101','9A','E3','E25','E35','34','36','9F','E12','E14','E23','E52','E53','18C','AX-16','AX-23','CX-4','CX-8','CX-11','7','39','2A','37','21','CX-2','CX-3','CX-10']);
-const DRAW_CHECKED_AT='2026-10-28T12:30:00Z';
+const DRAW_CHECKED_AT='2026-10-28T13:30:00Z';
 function drawAgrees(p){if(DRAW_CHECKED.has(p.id)&&!(p.ov&&String(p.ov.at||'')>DRAW_CHECKED_AT))return true;const h=p.hatch||'none';
   if(p.src==='wip')return (EXPECT[p.stage]||[]).includes(h);
   if(p.src==='nyt'||p.src==='sold'||p.src==='listed')return h==='none';
@@ -774,6 +774,15 @@ function villaTokens(str){
 }
 const GRANK={done:6,wip:5,sold:4,nyt:3,listed:2,office:1,unk:0,out:-1};
 const COPY_KEYS=['work','acts','final','hold','stage','customer','contractor','area','bua','sales','status','salesstatus','plotted','src','stageIdx','fromDrawing','wipstage','wipcustomer'];
+/* Work %: the report's 27 finishing activities (1st coat plaster … CRM).
+   Handed over = 100%. Under construction = the work sheet, but never less than the activities that come before its current stage.
+   Sold / unsold, not started = 0%. */
+const STAGE_FLOOR={'Foundation & Structural Works':0,'Block Work':0,'Plastering Work':0,'Tiling Work':8,'Doors and Windows Work':12,'Painting Work':18,'External Development':19,'Ready to Handover':25};
+function workPass(){const N=(DATA.acts||[]).length||27;PLOTS.forEach(p=>{const sh=p.work&&p.work.pct!=null?+p.work.pct:null;let v=null,src=null;
+  if(p.group==='done'){v=1;src=(sh!==null&&sh<1)?'ho':'sheet'}
+  else if(p.group==='wip'){const fl=(STAGE_FLOOR[p.stage]||0)/N;if(sh===null||sh<fl){v=fl;src='stage'}else{v=sh;src='sheet'}}
+  else if(p.group!=='out'){v=0;src='ns'}
+  p.wpct=v;p.wsrc=src})}
 function groupPass(){
   if(!Object.keys(PLOT_BY_N).length)PLOTS.forEach(p=>PLOT_BY_N[nid(p.id)]=p);
   const par={};const f=a=>{while(par[a]!==a){par[a]=par[par[a]];a=par[a]}return a};
@@ -823,7 +832,7 @@ function classify(p){
   p.flag=p.group==='unk'||p.group==='listed';
   p.drawOk=drawAgrees(p);
 }
-PLOTS.forEach(classify);groupPass();
+PLOTS.forEach(classify);groupPass();workPass();
 let contractors=[];
 function calcContractors(){contractors=[...new Set(PLOTS.filter(p=>p.group==='wip').map(p=>p.contractor||'Not assigned'))].sort((a,b)=>a==='Not assigned'?1:b==='Not assigned'?-1:a.localeCompare(b))}
 calcContractors();
@@ -843,8 +852,8 @@ const MODES={
       contractors.forEach(n=>c.push({key:'c:'+n,label:n,color:conColor(n)}));
       c.push({grp:"Other"});c.push({key:'nyt',label:'Not yet started',color:C_NS,ns:true});c.push({key:'done',label:'Handed over (HO list)',color:C_NEUTRAL});c.push({key:'sold',label:'Sold · construction not started',color:'#c4b5fd',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#bae6fd',ns:true});c.push({key:'unk',label:'Not in any list',color:'#cbd5e1',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});c.push({key:'out',label:'Not in project report (not counted)',color:'#eef2f6',ns:true});return c},
     key(p){return p.group==='wip'?'c:'+(p.contractor||'Not assigned'):p.group}},
-  work:{title:"Work completed (activities)",cats(){return [{grp:"Work-status sheet, 27 activities"},{key:'w100',label:'100% complete',color:'#14a37f'},{key:'w75',label:'75 – 99%',color:'#2563eb'},{key:'w50',label:'50 – 74%',color:'#60a5fa'},{key:'w25',label:'25 – 49%',color:'#93c5fd'},{key:'w1',label:'1 – 24%',color:'#c7d2fe'},{key:'w0',label:'Not started (0%)',color:'#e2e8f0',ns:true},{grp:"Other"},{key:'wn',label:'Not in work-status sheet',color:'#f1f5f9',ns:true},{key:'out',label:'Not in project report (not counted)',color:'#eef2f6',ns:true}]},
-    key(p){if(p.group==='out')return 'out';if(!p.work)return 'wn';const v=p.work.pct||0;return v>=1?'w100':v>=.75?'w75':v>=.5?'w50':v>=.25?'w25':v>0?'w1':'w0'}},
+  work:{title:"Work completed (activities)",cats(){return [{grp:"27 finishing activities"},{key:'w100',label:'100% complete',color:'#14a37f'},{key:'w75',label:'75 – 99%',color:'#2563eb'},{key:'w50',label:'50 – 74%',color:'#60a5fa'},{key:'w25',label:'25 – 49%',color:'#93c5fd'},{key:'w1',label:'1 – 24%',color:'#c7d2fe'},{key:'w0',label:'Not started (0%)',color:'#e2e8f0',ns:true},{key:'out',label:'Not in project report (not counted)',color:'#eef2f6',ns:true}]},
+    key(p){if(p.group==='out'||p.wpct==null)return 'out';const v=p.wpct;return v>=1?'w100':v>=.75?'w75':v>=.5?'w50':v>=.25?'w25':v>0?'w1':'w0'}},
   drawing:{title:"Status marked on drawing",cats(){const c=[{grp:"Hatch on UTF_LAYOUT_1"}];
       Object.entries(HATCH).forEach(([k,[l,col]])=>c.push({key:'h:'+k,label:l,color:col,ns:k==='none'}));
       c.push({grp:"Check"});c.push({key:'mm',label:'Tracker disagrees with drawing',color:'#ff3b30'});return c},
@@ -993,12 +1002,12 @@ function showDetail(p){
   if((p.group==='done'||p.group==='sold')&&p.wipstage)h+=`<div class="flagnote">Older WIP sheet (24-10-2026) still lists this villa at “${esc(SHORT[p.wipstage]||p.wipstage)}”${p.wipcustomer?' for '+esc(p.wipcustomer):''}. The newer ${p.group==='done'?'handover list':'sold list'} (26-10-2026) is used here.</div>`;
   if(p.id==='14')h+=`<p class="hint" style="margin:0">Plot 14 on the drawing is 14B in the project report.</p>`;
   if(p.id==='CX-12A')h+=`<p class="hint" style="margin:0">CX-12A on the drawing is CX-13 in the project report.</p>`;
-  if(p.work){const w=p.work,pc=Math.round((w.pct||0)*100),col=pc>=100?'#14a37f':pc>=75?'#3b82f6':pc>=40?'#60a5fa':pc>0?'#93c5fd':'#cbd5e1';
+  if(p.wpct!=null){const w=p.work||{},pc=Math.round(p.wpct*100),col=pc>=100?'#14a37f':pc>=75?'#3b82f6':pc>=40?'#60a5fa':pc>0?'#93c5fd':'#cbd5e1';
     h+=`<div class="wk"><div class="wkh"><span class="label">Work progress</span><b>${pc}%</b></div><div class="wkbar"><i style="width:${pc}%;background:${col}"></i></div>
-      <dl><dt>Current work</dt><dd>${esc(w.cur||'—')}</dd>${w.upto&&!/^No listed/.test(w.upto)?`<dt>Completed up to</dt><dd>${esc(w.upto)}</dd>`:''}${w.next&&!/^Check final/.test(w.next)?`<dt>Next pending</dt><dd>${esc(w.next)}</dd>`:''}<dt>Activities</dt><dd>${w.done??'—'} done · ${w.pend??'—'} pending</dd>${w.crm?`<dt>CRM</dt><dd>${esc(w.crm)}</dd>`:''}${w.rem?`<dt>Remarks</dt><dd>${esc(w.rem)}</dd>`:''}</dl>
-      ${p.acts?`<div class="acts">${DATA.acts.map((a,i)=>`<span class="${p.acts[i]==='C'?'on':''}" title="${esc(a.replace(/\s+/g,' '))}: ${p.acts[i]==='C'?'completed':'pending'}"></span>`).join('')}</div><p class="hint" style="margin:0;font-size:11px">${DATA.acts.length} work activities · filled = completed (hover for name)</p>`:''}</div>`}
+      ${p.wsrc==='ho'?`<p class="hint" style="margin:0">Handed over, so 100% (the work-status sheet showed ${Math.round((w.pct||0)*100)}%).</p>`:p.wsrc==='stage'?`<p class="hint" style="margin:0">${p.work?`Work-status sheet shows ${Math.round((w.pct||0)*100)}%;`:'Not in the work-status sheet;'} worked out from the stage (${esc(SHORT[p.stage]||p.stage)}).</p>`:''}
+      ${p.work&&p.wsrc==='sheet'?`<dl><dt>Current work</dt><dd>${esc(w.cur||'—')}</dd>${w.upto&&!/^No listed/.test(w.upto)?`<dt>Completed up to</dt><dd>${esc(w.upto)}</dd>`:''}${w.next&&!/^Check final/.test(w.next)?`<dt>Next pending</dt><dd>${esc(w.next)}</dd>`:''}<dt>Activities</dt><dd>${w.done??'—'} done · ${w.pend??'—'} pending</dd>${w.crm?`<dt>CRM</dt><dd>${esc(w.crm)}</dd>`:''}${w.rem?`<dt>Remarks</dt><dd>${esc(w.rem)}</dd>`:''}</dl>`:''}
+      ${p.acts&&p.wsrc==='sheet'?`<div class="acts">${DATA.acts.map((a,i)=>`<span class="${p.acts[i]==='C'?'on':''}" title="${esc(a.replace(/\s+/g,' '))}: ${p.acts[i]==='C'?'completed':'pending'}"></span>`).join('')}</div><p class="hint" style="margin:0;font-size:11px">${DATA.acts.length} work activities · filled = completed (hover for name)</p>`:''}</div>`}
   if(p.final){const f=p.final;h+=`<dl>${f.target?`<dt>Target end</dt><dd>${esc(f.target)}</dd>`:''}${f.cur?`<dt>Final-stage work</dt><dd>${esc(f.cur)}</dd>`:''}${f.snags?`<dt>Snags</dt><dd>${esc(f.snags)}</dd>`:''}${f.pending?`<dt>Other pending</dt><dd>${esc(f.pending)}</dd>`:''}</dl>`}
-  if(p.group==='done'&&p.work&&p.work.pct<1)h+=`<div class="flagnote">Listed as handed over, but the work-status sheet shows ${Math.round(p.work.pct*100)}% of activities complete.</div>`;
   if(p.hold)h+=`<div class="flagnote">On hold in the WIP sheet.</div>`;
   if(p.note)h+=`<dl><dt>Note on drawing</dt><dd>${esc(p.note)}</dd></dl>`;
   {const hh=HATCH[p.hatch||'none'];h+=`<dl><dt>Drawing hatch</dt><dd><span class="sw" style="display:inline-block;vertical-align:-2px;background:${hh[1]}"></span> ${hh[0]}</dd></dl>`;
@@ -1018,7 +1027,7 @@ function showDetail(p){
 }
 /* ---- tooltip ---- */
 const tip=$('#tip');
-function tipText(p){const t=tipText0(p);const nm=(p.combined&&p.entry)?`<b>${esc(p.entry)}</b>`:null;return (nm?t.replace(/^<b>[^<]*<\/b>/,nm):t)+(p.work?`<br><span style="opacity:.8">Work ${Math.round((p.work.pct||0)*100)}% · ${esc(p.work.cur||'')}</span>`:'')}
+function tipText(p){const t=tipText0(p);const nm=(p.combined&&p.entry)?`<b>${esc(p.entry)}</b>`:null;return (nm?t.replace(/^<b>[^<]*<\/b>/,nm):t)+(p.wpct!=null?`<br><span style="opacity:.8">Work ${Math.round(p.wpct*100)}%${p.group==='wip'&&p.work?' · '+esc(p.work.cur||''):''}</span>`:'')}
 function tipText0(p){if(p.group==='wip')return `<b>${esc(p.id)}</b><br>${SHORT[p.stage]}<br>${esc(p.customer||'')}<br><span style="opacity:.75">${esc(p.contractor||'No contractor')}</span>`;
   if(p.group==='nyt')return `<b>${esc(p.id)}</b><br>Not yet started<br>${esc((SALES[p.sales]||SALES['—'])[0])}`;
   if(p.group==='office')return `<b>${esc(p.id)}</b><br>Site office (not sold)`;
@@ -1174,7 +1183,7 @@ function renderTables(){
   drawWip();drawNyt();
 }
 function refreshAll(){
-  PLOTS.forEach(classify);groupPass();calcContractors();PLOTS.forEach(renderPlotEl);
+  PLOTS.forEach(classify);groupPass();workPass();calcContractors();PLOTS.forEach(renderPlotEl);
   deriveRows();paint();renderSummary();renderTables();if(typeof renderEntry==='function')renderEntry();if(typeof renderDaily==='function')renderDaily();
   if(selected)showDetail(selected);
 }
@@ -1549,7 +1558,7 @@ function csvDownload(name,head,rows){const q=v=>`"${String(v??'').replace(/"/g,'
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000)}
 const stamp=()=>{const d=new Date();const p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}-${p(d.getMonth()+1)}-${d.getFullYear()}_${p(d.getHours())}${p(d.getMinutes())}`};
 const PLOT_HEAD=['Plot','Villa','Series','Status','Stage','Customer','Contractor','Plot area (sq yd)','Sales status','Plotted','Work done %','Remarks','Last change','Changed by'];
-const plotRow=p=>[p.id,p.entry||p.id,SERL[p.series]||p.series,GLABEL[p.group]||p.group,p.group==='wip'?p.stage:'',p.customer||'',p.contractor||'',p.area??'',(SALES[p.sales]||[p.sales||''])[0]||'',p.plotted||'',p.work&&p.work.pct!=null?Math.round(p.work.pct*100)+'%':'',p.remarks||'',p.ov?fmtWhen(p.ov.at):'From files',p.ov?(p.ov.by||''):''];
+const plotRow=p=>[p.id,p.entry||p.id,SERL[p.series]||p.series,GLABEL[p.group]||p.group,p.group==='wip'?p.stage:'',p.customer||'',p.contractor||'',p.area??'',(SALES[p.sales]||[p.sales||''])[0]||'',p.plotted||'',p.wpct!=null?Math.round(p.wpct*100)+'%':'',p.remarks||'',p.ov?fmtWhen(p.ov.at):'From files',p.ov?(p.ov.by||''):''];
 const sortPlots=L=>L.slice().sort((a,b)=>SO.indexOf(a.series)-SO.indexOf(b.series)||natural(a.id,b.id));
 $('#dlAll').onclick=()=>{csvDownload(`UTF_all_plots_${stamp()}.csv`,PLOT_HEAD,sortPlots(PLOTS).map(plotRow));toast('Downloaded all plots.')};
 $('#dlShown').onclick=()=>{const L=entryRows();csvDownload(`UTF_plots_shown_${stamp()}.csv`,PLOT_HEAD,L.map(plotRow));toast(`Downloaded ${L.length} plots.`)};
