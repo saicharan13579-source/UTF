@@ -371,7 +371,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
       <div class="ringtip" id="ringTip" hidden></div>
     </div>
     <div class="kpis">
-      <button class="kpi" data-go="all"><span class="l"><i style="background:#fff"></i>Total villas</span><b data-count="250">0</b><small>Show whole site</small></button>
+      <button class="kpi" data-go="all"><span class="l"><i style="background:#fff"></i>Total villas</span><b id="kTot">0</b><small>Show whole site</small></button>
       <button class="kpi" data-go="done"><span class="l"><i style="background:#5eead4"></i>Handed over</span><b id="kHo">0</b><small>Villas handed over</small></button>
       <button class="kpi" data-go="wip"><span class="l"><i style="background:#93c5fd"></i>Under construction</span><b id="kWip">0</b><small>Villas with a stage</small></button>
       <button class="kpi" data-go="sold"><span class="l"><i style="background:#c4b5fd"></i>Sold · not started</span><b id="kSold">0</b><small>Villas confirmed sold</small></button>
@@ -641,8 +641,12 @@ PLOTS.forEach(p=>{p.base={};BASEKEYS.forEach(k=>p.base[k]=p[k])});
 let OV=(typeof SEED_OV!=='undefined'&&SEED_OV)||{};
 /* combined villas (2-4 plots = one villa): Combined Villas sheet + combinations used in the HO / WIP / work-status sheets of the 27-10-2026 report.
    On the drawing, plot 14 is 14B and CX-12A is CX-13. */
-const COMBINED=[["18A & 18B",["18A","18B"]],["AX 16 & 23",["AX-16","AX-23"]],["AX 26 & 31",["AX-26","AX-31"]],["AX 27 & 30",["AX-27","AX-30"]],["AX 28 & 29",["AX-28","AX-29"]],["AX 1, 2, 3, 4",["AX-1","AX-2","AX-3","AX-4"]],["AX 18 & 21",["AX-18","AX-21"]],["AX 25 & 32",["AX-25","AX-32"]],["AX 33 & 38",["AX-33","AX-38"]],["E 14 & 23",["E14","E23"]],["E 17 & 20",["E17","E20"]],["E 18 & 19",["E18","E19"]],["E 38 & 39",["E38","E39"]],["E 42 & 43",["E42","E43"]],["E 52 & 53",["E52","E53"]],["E 57, 58 & 59",["E57","E58","E59"]],["E 10 & 27",["E10","E27"]],["1G & 1H",["1G","1H"]],["3A & 4",["3A","4"]],["47 & 48",["47","48"]],["49 & 50",["49","50"]],["66 & 67A",["66","67A"]],["1K & 1L",["1K","1L"]],["CX 8 & 10",["CX-8","CX-10"]],["69 & 70",["69","70"]],["107 & 108",["107","108"]],["14A & 14B",["14","14A"]],["1B & 1E",["1B","1E"]]];
-const PROJECT_TOTAL=250;
+const COMBINED=[["18A & 18B",["18A","18B"]],["AX 16 & 23",["AX-16","AX-23"]],["AX 26 & 31",["AX-26","AX-31"]],["AX 27 & 30",["AX-27","AX-30"]],["AX 28 & 29",["AX-28","AX-29"]],["AX 1, 2, 3, 4",["AX-1","AX-2","AX-3","AX-4"]],["AX 18 & 21",["AX-18","AX-21"]],["AX 25 & 32",["AX-25","AX-32"]],["AX 33 & 38",["AX-33","AX-38"]],["E 14 & 23",["E14","E23"]],["E 17 & 20",["E17","E20"]],["E 18 & 19",["E18","E19"]],["E 38 & 39",["E38","E39"]],["E 42 & 43",["E42","E43"]],["E 52 & 53",["E52","E53"]],["E 57, 58 & 59",["E57","E58","E59"]],["E 10 & 27",["E10","E27"]],["1G & 1H",["1G","1H"]],["3A & 4",["3A","4"]],["47 & 48",["47","48"]],["49 & 50",["49","50"]],["66 & 67A",["66","67A"]],["1K & 1L",["1K","1L"]],["69 & 70",["69","70"]],["107 & 108",["107","108"]],["14A & 14B",["14","14A"]],["1B & 1E",["1B","1E"]]];
+let PROJECT_TOTAL=250;const REPORT_TOTAL=250;
+/* CX-8 and CX-10 are separate villas (TOTAL-VILLAS lists both; CX-10 is a Ravikanth Reddy plot, 28-10-2026) */
+const SPLIT=new Set(['CX-8','CX-10']);
+/* plots marked "Ravikanth Reddy" on the drawing (confirmed 28-10-2026) */
+const RR=new Set(['AX-7','AX-8','AX-10','AX-11','AX-13','AX-14','AX-15','CX-3','CX-10','CX-17','CX-18']);
 const VILLA_OF={};COMBINED.forEach(([n,ids])=>ids.forEach(i=>VILLA_OF[i]=n));
 /* ---- villa grouping: combined plots count as one villa with one status ---- */
 const nid=v=>String(v).toUpperCase().replace(/[\s\-\/]/g,'');
@@ -662,7 +666,7 @@ function groupPass(){
   const tokOf={};const nameOf={};
   const link=(ids,name,force)=>{const real=ids.map(t=>PLOT_BY_N[t]).filter(Boolean);if(!real.length)return;real.slice(1).forEach(q=>{par[f(q.id)]=f(real[0].id)});real.forEach(q=>{tokOf[q.id]=(tokOf[q.id]||[]).concat(ids);if(name&&(force||!nameOf[q.id]))nameOf[q.id]=name})};
   COMBINED.forEach(([n,ids])=>link(ids.map(nid),n,true));
-  PLOTS.forEach(p=>{const o=p.ov;if(o&&o.villa&&/[&,+]/.test(o.villa)){const t=villaTokens(o.villa);if(!t.includes(nid(p.id)))t.push(nid(p.id));link(t,o.villa.trim(),false)}});
+  PLOTS.forEach(p=>{const o=p.ov;if(o&&o.villa&&!SPLIT.has(p.id)&&/[&,+]/.test(o.villa)){const t=villaTokens(o.villa);if(!t.includes(nid(p.id)))t.push(nid(p.id));link(t,o.villa.trim(),false)}});
   const groups={};PLOTS.forEach(p=>{const r=f(p.id);(groups[r]=groups[r]||[]).push(p)});
   Object.values(groups).forEach(ms=>{
     ms.forEach(m=>{m.villaTokens=[...new Set([nid(m.id)].concat(tokOf[m.id]||[]))]});
@@ -692,10 +696,10 @@ function classify(p){
   if(VILLA_OF[p.id]){p.entry=VILLA_OF[p.id];p.combined=true}
   const o=OV[p.id];p.ov=o||null;
   if(o){
-    if(o.status&&GLABEL[o.status]&&o.status!==p.group&&!(o.status==='unk'&&p.group==='out')){p.group=o.status;p.src=SRCOF[o.status];p.fromDrawing=false;p.wipstage=null;}
+    if(o.status&&GLABEL[o.status]&&o.status!==p.group&&!(o.status==='unk'&&(p.group==='out'||RR.has(p.id)))){p.group=o.status;p.src=SRCOF[o.status];p.fromDrawing=false;p.wipstage=null;}
     ['stage','customer','contractor','sales'].forEach(k=>{if(o[k]!=null&&o[k]!=='')p[k]=o[k]});
     if(o.area!=null&&o.area!=='')p.area=+o.area;
-    if(o.villa&&!VILLA_OF[p.id]){p.entry=o.villa;p.combined=/[&,]/.test(o.villa)}
+    if(o.villa&&!VILLA_OF[p.id]&&!SPLIT.has(p.id)){p.entry=o.villa;p.combined=/[&,]/.test(o.villa)}
     p.remarks=o.remarks||'';
     if(p.group==='nyt'&&o.status==='nyt'&&!p.status)p.status='Unsold';
   }
@@ -970,6 +974,8 @@ function deriveRows(){
   [['nyt',null],['sold','Sold (no stage yet)'],['listed','In WIP list, no progress']].forEach(([g,st])=>villasBy(g).forEach((p,k)=>N.push({villa:k,series:p.series,sales:g==='nyt'?(p.sales||'—'):'—',status:st||p.status||'Unsold',plotted:p.plotted||'—'})));
   const om=offmapOpen();
   VC={};['done','wip','sold','nyt','listed','unk','office','out'].forEach(g=>VC[g]=villasBy(g).size+om.filter(o=>o.group===g).length);
+  PROJECT_TOTAL=['done','wip','sold','nyt','listed','unk','office'].reduce((a,g)=>a+VC[g],0);
+  VC.rr=new Set(PLOTS.filter(p=>p.group!=='out'&&p.sales==='Ravikanth Reddy').map(vkey)).size;
 }
 function hbars(el,pairs,keys){const m=Math.max(1,...pairs.map(p=>p[1]));el.innerHTML=pairs.map(([l,n,c],i)=>`<div class="hb" role="button" tabindex="0" data-mode="${keys?keys[i][0]:''}" data-key="${keys?esc(keys[i][1]):''}" title="Show on site map"><span>${esc(l)}</span><span class="t"><i style="width:${n/m*100}%;background:${c||'var(--accent)'}"></i></span><b>${n}</b></div>`).join('')}
 document.querySelectorAll('.hbars').forEach(el=>{const go=e=>{const b=e.target.closest('.hb');if(!b||!b.dataset.mode)return;onlyCat(b.dataset.mode,b.dataset.key)};el.addEventListener('click',go);el.addEventListener('keydown',e=>{if(e.key==='Enter')go(e)})});
@@ -988,8 +994,9 @@ function renderSummary(){
   h+=`<tr><td>Not in any list (plots without a status)</td><td class="num">${VC.unk}</td><td class="num">${pc('unk')}</td></tr>`;
   h+=`<tr><td><b>Total counted</b></td><td class="num"><b>${tv+VC.unk}</b></td><td class="num"><b>${tp+pc('unk')}</b></td></tr>`;
   h+=`<tr><td>Not in project report (drawn, not counted)</td><td class="num">${VC.out}</td><td class="num">${pc('out')}</td></tr>`;
-  h+=`<tr><td>Project total</td><td class="num">${PROJECT_TOTAL}</td><td class="num"></td></tr>`;
-  const diff=tv+VC.unk-PROJECT_TOTAL;h+=`<tr><td><b>Difference to resolve</b></td><td class="num"><b style="color:${diff?'#c62828':'inherit'}">${diff>0?'+':''}${diff}</b></td><td class="num"></td></tr>`;
+  h+=`<tr><td>of which Ravikanth Reddy plots (drawing)</td><td class="num">${VC.rr}</td><td class="num"></td></tr>`;
+  h+=`<tr><td>Report total (TOTAL-VILLAS sheet)</td><td class="num">${REPORT_TOTAL}</td><td class="num"></td></tr>`;
+  const diff=tv+VC.unk-REPORT_TOTAL;h+=`<tr><td><b>Difference to the report</b></td><td class="num"><b style="color:${diff?'#c62828':'inherit'}">${diff>0?'+':''}${diff}</b></td><td class="num"></td></tr>`;
   $('#finalTbl').innerHTML=h;
   // checks
   const byStage=PLOTS.filter(p=>p.group==='wip'&&!p.drawOk);const unk=PLOTS.filter(p=>p.group==='unk');const unkGreen=unk.filter(p=>p.hatch==='handover');
@@ -997,10 +1004,10 @@ function renderSummary(){
   const both=PLOTS.filter(p=>p.group==='wip'&&p.salesstatus).map(p=>p.id);
   const om=offmapOpen();const edited=PLOTS.filter(p=>p.ov).length;
   const li=[];
-  li.push(`Counted by villa (combined plots = one villa): ${tv+VC.unk} villas on the master layout against the project total of ${PROJECT_TOTAL} (${diff===0?'matches':'difference '+(diff>0?'+':'')+diff}).`);
+  li.push(`Counted by villa (combined plots = one villa): ${tv+VC.unk} villas on the master layout (${VC.rr} of them Ravikanth Reddy plots) against the report total of ${REPORT_TOTAL} (${diff===0?'matches':'difference '+(diff>0?'+':'')+diff}).`);
   li.push(`Report 27-10-2026, TOTAL-VILLAS sheet: its 250 rows are 242 different villas (AX24 ×3, E6 ×2 and E35 / E-35 repeated; CX-8 + CX-10 and 1B + 1E entered separately although they are combined). The other villas come from the report's HO, WIP, NYT and work-status sheets: 107&108, 69&70, 21, E24, E28 and 101.`);
-  li.push(`Combined villas follow the report's Combined Villas sheet plus the combinations written in its HO / WIP / ALL-Villas sheets (69&70, 107&108, 14A&14B, 1B&1E). 3 is its own villa (3A&4 is the combined one) and 103 and 104 are two villas, as in TOTAL-VILLAS and the HO list. 1E&1F (ALL-Villas sheet) is not used: 1F is unsold in NYT-UTF and 1E is sold with 1B.`);
-  li.push(`AX-7, AX-8, AX-13, AX-14, AX-15 and AX-39 are drawn on the layout but are in no sheet of the report, so they are shown in light grey and not counted. AX-10, AX-11, CX-6, CX-12, CX-17 and CX-18 are in TOTAL-VILLAS with no status sheet, so they count as not yet started (as in the report's dashboard).`);
+  li.push(`Combined villas follow the report's Combined Villas sheet plus the combinations written in its HO / WIP / ALL-Villas sheets (69&70, 107&108, 14A&14B, 1B&1E). 3 is its own villa (3A&4 is the combined one), 103 and 104 are two villas, and CX-8 and CX-10 are two villas (as in TOTAL-VILLAS; CX-10 is a Ravikanth Reddy plot). 1E&1F (ALL-Villas sheet) is not used: 1F is unsold in NYT-UTF and 1E is sold with 1B.`);
+  li.push(`Ravikanth Reddy plots (per drawing, confirmed 28-10-2026): AX-7, AX-8, AX-10, AX-11, AX-13, AX-14, AX-15, CX-3, CX-10, CX-17, CX-18 — counted as not yet started, sales status "Ravikanth Reddy". AX-7, AX-8, AX-13, AX-14 and AX-15 are not in the report's TOTAL-VILLAS sheet. AX-39 is in no sheet of the report and is not counted. CX-6 and CX-12 are in TOTAL-VILLAS with no status sheet, so they count as not yet started.`);
   li.push(`Handover list used: the right-hand HO list (matches the work-status sheet), plus 56 (left HO list and hatched as handed over on the drawing; its work-status row is blank). 7, 37 and 39 from the left list are still under construction in the Final-stage sheet. 45A, E3, E25 and E35 are handed over with snags still open.`);
   if(edited)li.push(`${edited} plots have been updated in Data entry.`);
   if(sup.length)li.push(`Newest list used: ${sup.join(', ')} — the older WIP sheet still lists them under construction.`);
@@ -1013,7 +1020,7 @@ function renderSummary(){
   $('#checks').innerHTML=li.map(x=>`<li>${esc(x)}</li>`).join('');
   // KPIs + ring
   const set=(id,v)=>{const el=$(id);if(firstCount)countUp(el,v);else{el._cu=(el._cu||0)+1;el.textContent=v}};
-  set('#kHo',VC.done);set('#kWip',VC.wip);set('#kSold',VC.sold);set('#kNyt',VC.nyt);
+  set('#kTot',PROJECT_TOTAL);set('#kHo',VC.done);set('#kWip',VC.wip);set('#kSold',VC.sold);set('#kNyt',VC.nyt);
   renderRing();firstCount=false;
 }
 
