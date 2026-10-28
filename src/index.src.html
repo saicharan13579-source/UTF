@@ -278,7 +278,15 @@ table.et tr.efold.open .efc{transform:rotate(90deg)}
 .reglock{align-items:center;text-align:center;padding:40px 18px}
 .reglock .regicon{font-size:34px}
 .reglock p{margin:0;color:var(--muted)}
-#regTable{min-width:900px}
+#regTable{min-width:1700px}
+#regTable td.wide input{min-width:210px}
+#regTable td.mid input{min-width:110px}
+#regTable td input{min-width:70px}
+.regsum{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+.regsum .rs{padding:5px 12px;border-radius:999px;background:var(--glass,var(--sheet));border:1px solid var(--glass-edge,var(--rule));font-size:13px;color:var(--muted)}
+.regsum .rs b{color:var(--ink);font-family:var(--f-display);margin-right:3px}
+.regsum .rs.main{background:var(--accent-soft)}
+.regsum .rs.ok b{color:#0f9d74}.regsum .rs.pend b{color:#b45309}
 #regTable td.rn{color:var(--muted);font:12px var(--f-mono);width:40px}
 #regTable th{white-space:nowrap}
 table.et tr.edited td.v::after{content:" ●";color:var(--accent);font-size:10px}
@@ -625,12 +633,14 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
     <div id="regLocked" class="box reglock"><div class="regicon" aria-hidden="true">🔒</div><p>Enter your name and the registration PIN to see and update the registration details.</p></div>
     <div id="regBody" hidden>
       <div class="filters">
-        <label><span class="label">Find</span><input id="rq" type="search" placeholder="Villa, customer, document no…"></label>
+        <label><span class="label">Find</span><input id="rq" type="search" placeholder="Villa, customer, survey no, doc no…"></label>
+        <span id="rfilters" style="display:contents"></span>
         <span class="count" id="rcount"></span>
         <button class="btn sm" id="regAdd">Add row</button>
         <button class="btn sm" id="regCsv">Download CSV</button>
         <button class="btn" id="regSaveAll" disabled>Save all changes</button>
       </div>
+      <div class="regsum" id="regSum"></div>
       <div class="tablewrap"><table class="t et" id="regTable"><thead></thead><tbody></tbody></table></div>
       <div class="box">
         <h3>Registration changes</h3>
@@ -1435,14 +1445,26 @@ function regSetState(){
     $('#regRefresh').onclick=()=>regFetch(true);
   }
 }
-function regLoad(r){REG.headers=r.headers||[];REG.rows=r.rows||[];REG.log=r.log||[];REG.dirty.clear();regRender();regRenderLog()}
+function regLoad(r){REG.headers=r.headers||[];REG.rows=r.rows||[];REG.log=r.log||[];REG.dirty.clear();regFilters();regRender();regRenderLog()}
 async function regFetch(say){if(!REG.pin)return;try{const r=await apiPost({action:'reg_get',pin:REG.pin});if(r.ok){regLoad(r);if(say)toast('Registration details refreshed.')}else if(r.error==='pin'){REG.pin=null;regSetState()}}catch(e){if(say)toast('Could not reach the data sheet.')}}
+const REG_FILT=['Location','Status','Reg Status','Reg done By'];
+function regFilters(){const H=REG.headers,box=$('#rfilters');const keep={};box.querySelectorAll('select').forEach(x=>keep[x.dataset.j]=x.value);
+  box.innerHTML=REG_FILT.map(n=>H.indexOf(n)).filter(j=>j>=0).map(j=>{const vals=[...new Set(REG.rows.map(r=>r.v[j]||'(blank)'))].sort((a,b)=>a.localeCompare(b));
+    return `<label><span class="label">${esc(H[j])}</span><select data-j="${j}"><option value="">All</option>${vals.map(v=>`<option${keep[j]===v?' selected':''}>${esc(v)}</option>`).join('')}</select></label>`}).join('');
+  box.querySelectorAll('select').forEach(x=>x.addEventListener('input',regRender))}
+function regSummary(rows){const H=REG.headers,js=H.indexOf('Status'),jr=H.indexOf('Reg Status');if(js<0&&jr<0){$('#regSum').innerHTML='';return}
+  const c={};rows.forEach(r=>{const k=r.v[js]||'(blank)';c[k]=(c[k]||0)+1});const reg=jr>=0?rows.filter(r=>/^registered$/i.test((r.v[jr]||'').trim())).length:0;
+  $('#regSum').innerHTML=`<span class="rs main"><b>${rows.length}</b> rows</span>${jr>=0?`<span class="rs ok"><b>${reg}</b> registered</span><span class="rs pend"><b>${rows.length-reg}</b> not registered</span>`:''}`+
+    Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<span class="rs"><b>${n}</b> ${esc(k)}</span>`).join('')}
 function regRender(){
   const H=REG.headers,q=$('#rq').value.trim().toLowerCase();
+  const fs=[...$('#rfilters').querySelectorAll('select')].filter(x=>x.value).map(x=>[+x.dataset.j,x.value]);
   $('#regTable').tHead.innerHTML=`<tr><th>#</th>${H.map(h=>`<th>${esc(h)}</th>`).join('')}<th></th></tr>`;
-  const rows=REG.rows.filter(r=>!q||r.v.join(' ').toLowerCase().includes(q));
+  const rows=REG.rows.filter(r=>(!q||r.v.join(' ').toLowerCase().includes(q))&&fs.every(([j,v])=>(r.v[j]||'(blank)')===v));
+  regSummary(rows);
+  const wide=h=>/customer|survey no|reg done/i.test(h)?' class="wide"':/location|status|date|doc/i.test(h)?' class="mid"':'';
   $('#regTable').tBodies[0].innerHTML=rows.length?rows.map(r=>{const d=REG.dirty.get(r.row);const vals=d||r.v;
-    return `<tr data-row="${r.row}" class="${d?'dirty':''}"><td class="rn">${r.row-1}</td>${H.map((h,j)=>`<td><input data-j="${j}" value="${esc(vals[j]??'')}" aria-label="${esc(h)} row ${r.row-1}"></td>`).join('')}<td><button class="btn sm" data-act="rsave"${d?'':' disabled'}>Save</button></td></tr>`}).join('')
+    return `<tr data-row="${r.row}" class="${d?'dirty':''}"><td class="rn">${r.row-1}</td>${H.map((h,j)=>`<td${wide(h)}><input data-j="${j}" value="${esc(vals[j]??'')}" aria-label="${esc(h)} row ${r.row-1}"></td>`).join('')}<td><button class="btn sm" data-act="rsave"${d?'':' disabled'}>Save</button></td></tr>`}).join('')
     :`<tr><td colspan="${H.length+2}" class="muted">${REG.rows.length?'No rows match.':'No registration details yet.'}</td></tr>`;
   $('#rcount').textContent=`${rows.length} of ${REG.rows.length} rows`;
   $('#regSaveAll').disabled=!REG.dirty.size;
