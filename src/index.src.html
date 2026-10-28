@@ -299,6 +299,7 @@ table.et tr.efold.open .efc{transform:rotate(90deg)}
 .regsum .rs.ok b{color:#0f9d74}.regsum .rs.pend b{color:#b45309}
 #regTable td.rn{color:var(--muted);font:12px var(--f-mono);width:40px}
 #regTable th{white-space:nowrap}
+table.et td.v .cmb{display:block;font:500 11px var(--f-body);color:var(--muted);white-space:nowrap}
 table.et tr.edited td.v::after{content:" ●";color:var(--accent);font-size:10px}
 .et .when{font-size:11px;color:var(--muted);white-space:nowrap}
 .et .acts{display:flex;gap:6px;white-space:nowrap}
@@ -1317,7 +1318,8 @@ function rowHTML(p){
   const dis=canWrite?'':' disabled';
   const st=v('status');
   const by=p.ov&&p.ov.by?p.ov.by:'';
-  return `<td class="v">${esc(p.id)}${NEEDS(p)?' <span title="Needs a status" style="color:#c62828">●</span>':''}</td>
+  const ms=membersOf(p);
+  return `<td class="v">${ms.length>1?`${esc(ms.map(m=>m.id).join(' & '))}<small class="cmb">${ms.length} plots · one villa</small>`:esc(p.id)}${NEEDS(p)?' <span title="Needs a status" style="color:#c62828">●</span>':''}</td>
   <td class="w-villa"><input data-f="villa" value="${esc(v('villa'))}" placeholder="${esc(p.id)}"${dis} aria-label="Villa for ${esc(p.id)}"></td>
   <td class="w-st"><select data-f="status"${dis} aria-label="Status for ${esc(p.id)}">${entryOpts(0,STATUS_OPTS,st)}</select></td>
   <td class="w-stage"><select data-f="stage"${dis||st!=='wip'?' disabled':''} aria-label="Stage for ${esc(p.id)}">${entryOpts(0,STAGE_OPTS,st==='wip'?v('stage'):'')}</select></td>
@@ -1335,8 +1337,13 @@ function entryRows(){
     .sort((a,b)=>SO.indexOf(a.series)-SO.indexOf(b.series)||natural(a.id,b.id));
 }
 const ENTRY_OPEN=new Set();const SERL={Numbered:'Number series','1':'1 series','2':'2 series','3':'3 series',E:'E series','9':'9 series','18':'18 series',AX:'AX series',CX:'CX series'};
+const membersOf=p=>p.combined&&p.entry?sortPlotsN(PLOTS.filter(q=>(q.entry||q.id)===p.entry)):[p];
+const sortPlotsN=L=>L.slice().sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}));
+/* one row per villa: a combined villa shows once, on the member with the latest change */
+function villaRows(L){const seen=new Set(),out=[];L.forEach(p=>{const k=p.combined&&p.entry?'v:'+p.entry:'p:'+p.id;if(seen.has(k))return;seen.add(k);
+  const ms=membersOf(p);const rep=ms.filter(m=>m.ov).sort((a,b)=>String(b.ov.at).localeCompare(String(a.ov.at)))[0]||ms[0];out.push(rep)});return out}
 function renderEntry(){
-  const tb=$('#entryTable').tBodies[0];const rows=entryRows();
+  const tb=$('#entryTable').tBodies[0];const rows=villaRows(entryRows());
   const keep=new Map();[...tb.rows].forEach(tr=>{if(tr.dataset.id&&dirty.has(tr.dataset.id))keep.set(tr.dataset.id,tr)});
   const frag=document.createDocumentFragment();
   const filtered=!!($('#eq').value.trim()||$('#es').value||$('#est').value||$('#eonly').checked);
@@ -1355,7 +1362,7 @@ function renderEntry(){
   tb.innerHTML='';tb.appendChild(frag);
   if(!rows.length)tb.innerHTML=`<tr><td colspan="11" class="muted">No plots match these filters.</td></tr>`;
   const need=PLOTS.filter(NEEDS).length;
-  $('#ecount').textContent=`${rows.length} of ${PLOTS.length} plots · ${need} need a status`;
+  $('#ecount').textContent=`${rows.length} of ${villaRows(PLOTS).length} villas · ${need} need a status`;
   $('#saveAll').disabled=!(canWrite&&dirty.size);
   $('#conList').innerHTML=contractors.filter(c=>c!=='Not assigned').map(c=>`<option value="${esc(c)}">`).join('');
 }
@@ -1387,7 +1394,11 @@ async function pull(first){if(!API||syncing)return;try{const d=await apiGet();if
     if(first){const t=todayKey();if(!(d.daily||[]).some(r=>String(r.date).slice(0,10)===t)||!d.hasCurrent){apiPost({action:'sync',counts:countsNow(),current:currentRows()}).catch(()=>{})}}
     $('#entryState').dataset.live='1';setState()}catch(e){$('#entryState').textContent='Could not reach the data sheet. Showing saved data.';$('#entryState').classList.add('ro')}}
 async function savePlot(id){
-  if(!API||!canWrite)return false;const p=PLOTS.find(q=>q.id===id);const d=dirty.get(id);if(!p||!d)return false;
+  if(!API||!canWrite)return false;const p0=PLOTS.find(q=>q.id===id);const d=dirty.get(id);if(!p0||!d)return false;
+  const ms=membersOf(p0);if(ms.length>1){let ok=true;for(const m of ms){dirty.set(m.id,Object.assign({},d));if(!(await savePlotOne(m.id)))ok=false}dirty.delete(id);return ok}
+  return savePlotOne(id)}
+async function savePlotOne(id){
+  const p=PLOTS.find(q=>q.id===id);const d=dirty.get(id);if(!p||!d)return false;
   const body=bodyFor(p,d);body.by=EDITOR;
   const changed=Object.keys(d).filter(k=>k in body).map(k=>`${k==='status'?'status → '+GLABEL[body.status]:k==='stage'?'stage → '+(SHORT[body.stage]||'—'):k+' → '+(body[k]===''?'—':body[k])}`);
   const prev=OV[id];OV[id]=body;dirty.delete(id);refreshAll();
@@ -1403,13 +1414,15 @@ async function savePlot(id){
  $('#entryTable').addEventListener('click',tog);$('#entryTable').addEventListener('keydown',tog)}
 $('#entryTable').addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const id=b.closest('tr').dataset.id;const p=PLOTS.find(q=>q.id===id);
   if(b.dataset.act==='map'){hidden.clear();paint();show('map');requestAnimationFrame(()=>{showDetail(p);focusPlot(p,6)});return}
-  if(b.dataset.act==='save'){b.disabled=true;b.textContent='Saving…';if(await savePlot(id))toast(`Saved ${id}. The map is updated.`);renderEntry();return}
-  if(b.dataset.act==='reset'){if(dirty.has(id)&&!p.ov){dirty.delete(id);renderEntry();return}
-    if(!canWrite)return;b.disabled=true;const prev=OV[id];delete OV[id];dirty.delete(id);refreshAll();
-    try{const r=await apiPost({action:'reset',pin:PINV,editor:EDITOR,id,what:'reset to file data',counts:countsNow(),current:currentRows()});if(!r.ok)throw 0;
-      EDITS.unshift({plot:id,what:'reset to file data',at:new Date().toISOString(),by:EDITOR});renderLog(EDITS);toast(`${id} reset to the file data.`)}
-    catch(err){if(prev)OV[id]=prev;refreshAll();toast('Could not reset '+id+'.')}}});
-$('#saveAll').onclick=async()=>{const ids=[...dirty.keys()];$('#saveAll').disabled=true;let ok=0;for(const id of ids){if(await savePlot(id))ok++}toast(`Saved ${ok} of ${ids.length} plots.`);renderEntry()};
+  if(b.dataset.act==='save'){b.disabled=true;b.textContent='Saving…';if(await savePlot(id))toast(`Saved ${membersOf(p).map(m=>m.id).join(' & ')}. The map is updated.`);renderEntry();return}
+  if(b.dataset.act==='reset'){const ms=membersOf(p);if(dirty.has(id)&&!ms.some(m=>m.ov)){dirty.delete(id);renderEntry();return}
+    if(!canWrite)return;b.disabled=true;dirty.delete(id);
+    for(const m of ms.filter(m=>m.ov)){const mid=m.id;const prev=OV[mid];delete OV[mid];refreshAll();
+      try{const r=await apiPost({action:'reset',pin:PINV,editor:EDITOR,id:mid,what:'reset to file data',counts:countsNow(),current:currentRows()});if(!r.ok)throw 0;
+        EDITS.unshift({plot:mid,what:'reset to file data',at:new Date().toISOString(),by:EDITOR})}
+      catch(err){if(prev)OV[mid]=prev;refreshAll();toast('Could not reset '+mid+'.')}}
+    renderLog(EDITS);renderEntry();toast(`${ms.map(m=>m.id).join(' & ')} reset to the file data.`)}});
+$('#saveAll').onclick=async()=>{const ids=[...dirty.keys()];$('#saveAll').disabled=true;let ok=0;for(const id of ids){if(await savePlot(id))ok++}toast(`Saved ${ok} of ${ids.length} villas.`);renderEntry()};
 function setState(){const el=$('#entryState'),ui=$('#pinUi');
   if(!API){el.textContent='View only · data sheet not connected yet';el.classList.add('ro');ui.innerHTML='';return}
   if(!unlocked){
