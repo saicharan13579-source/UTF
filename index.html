@@ -366,7 +366,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
       <div class="ringtip" id="ringTip" hidden></div>
     </div>
     <div class="kpis">
-      <button class="kpi" data-go="all"><span class="l"><i style="background:#fff"></i>Total villas</span><b data-count="258">0</b><small>Show whole site</small></button>
+      <button class="kpi" data-go="all"><span class="l"><i style="background:#fff"></i>Total villas</span><b data-count="250">0</b><small>Show whole site</small></button>
       <button class="kpi" data-go="done"><span class="l"><i style="background:#5eead4"></i>Handed over</span><b id="kHo">0</b><small>Villas handed over</small></button>
       <button class="kpi" data-go="wip"><span class="l"><i style="background:#93c5fd"></i>Under construction</span><b id="kWip">0</b><small>Villas with a stage</small></button>
       <button class="kpi" data-go="sold"><span class="l"><i style="background:#c4b5fd"></i>Sold · not started</span><b id="kSold">0</b><small>Villas confirmed sold</small></button>
@@ -647,7 +647,42 @@ PLOTS.forEach(p=>{p.base={};BASEKEYS.forEach(k=>p.base[k]=p[k])});
 let OV=(typeof SEED_OV!=='undefined'&&SEED_OV)||{};
 /* combined villas (2-4 plots = one villa), confirmed list 27-10-2026 */
 const COMBINED=[["18A & 18B",["18A","18B"]],["AX 16 & 23",["AX-16","AX-23"]],["AX 26 & 31",["AX-26","AX-31"]],["AX 27 & 30",["AX-27","AX-30"]],["AX 28 & 29",["AX-28","AX-29"]],["AX 1, 2, 3, 4",["AX-1","AX-2","AX-3","AX-4"]],["AX 18 & 21",["AX-18","AX-21"]],["AX 25 & 32",["AX-25","AX-32"]],["AX 33 & 38",["AX-33","AX-38"]],["E 14 & 23",["E14","E23"]],["E 17 & 20",["E17","E20"]],["E 18 & 19",["E18","E19"]],["E 38 & 39",["E38","E39"]],["E 42 & 43",["E42","E43"]],["E 52 & 53",["E52","E53"]],["E 57, 58 & 59",["E57","E58","E59"]],["E 10 & 27",["E10","E27"]],["1G & 1H",["1G","1H"]],["3A & 4",["3A","4"]],["47 & 48",["47","48"]],["49 & 50",["49","50"]],["66 & 67A",["66","67A"]],["1K & 1L",["1K","1L"]]];
+const PROJECT_TOTAL=250;
 const VILLA_OF={};COMBINED.forEach(([n,ids])=>ids.forEach(i=>VILLA_OF[i]=n));
+/* ---- villa grouping: combined plots count as one villa with one status ---- */
+const nid=v=>String(v).toUpperCase().replace(/[\s\-\/]/g,'');
+const PLOT_BY_N={};
+function villaTokens(str){
+  const out=[];let pre='';
+  String(str).split(/\s*(?:&|,|\+|\band\b)\s*/i).forEach((t,i)=>{t=t.trim().toUpperCase().replace(/^(AX|CX|E)[\s-]*(?=\d)/,m=>{pre=m.replace(/[\s-]/g,'');return pre});
+    if(!t)return;if(i>0&&/^\d/.test(t)&&pre&&!t.startsWith(pre))t=pre+t;out.push(nid(t))});
+  return out;
+}
+const GRANK={done:6,wip:5,sold:4,nyt:3,listed:2,office:1,unk:0};
+const COPY_KEYS=['stage','customer','contractor','area','bua','sales','status','salesstatus','plotted','src','stageIdx','fromDrawing','wipstage','wipcustomer'];
+function groupPass(){
+  if(!Object.keys(PLOT_BY_N).length)PLOTS.forEach(p=>PLOT_BY_N[nid(p.id)]=p);
+  const par={};const f=a=>{while(par[a]!==a){par[a]=par[par[a]];a=par[a]}return a};
+  PLOTS.forEach(p=>par[p.id]=p.id);
+  const tokOf={};const nameOf={};
+  const link=(ids,name,force)=>{const real=ids.map(t=>PLOT_BY_N[t]).filter(Boolean);if(!real.length)return;real.slice(1).forEach(q=>{par[f(q.id)]=f(real[0].id)});real.forEach(q=>{tokOf[q.id]=(tokOf[q.id]||[]).concat(ids);if(name&&(force||!nameOf[q.id]))nameOf[q.id]=name})};
+  COMBINED.forEach(([n,ids])=>link(ids.map(nid),n,true));
+  PLOTS.forEach(p=>{const o=p.ov;if(o&&o.villa&&/[&,+]/.test(o.villa)){const t=villaTokens(o.villa);if(!t.includes(nid(p.id)))t.push(nid(p.id));link(t,o.villa.trim(),false)}});
+  const groups={};PLOTS.forEach(p=>{const r=f(p.id);(groups[r]=groups[r]||[]).push(p)});
+  Object.values(groups).forEach(ms=>{
+    ms.forEach(m=>{m.villaTokens=[...new Set([nid(m.id)].concat(tokOf[m.id]||[]))]});
+    if(ms.length<2&&!(tokOf[ms[0].id]||[]).some(t=>!PLOT_BY_N[t]))return;
+    // canonical name: COMBINED name if any member has one, else a typed name
+    const canon=ms.map(m=>VILLA_OF[m.id]).find(Boolean)||ms.map(m=>nameOf[m.id]).find(Boolean)||ms.map(m=>m.id).join(' & ');
+    // primary member: best status, then most recent edit
+    const real=m=>(m.fromDrawing||m.group==='unk')?0:1;
+    const prim=ms.slice().sort((a,b)=>(real(b)-real(a))||String((b.ov&&b.ov.at)||'').localeCompare(String((a.ov&&a.ov.at)||''))||(GRANK[b.group]-GRANK[a.group]))[0];
+    const allTok=[...new Set(ms.flatMap(m=>m.villaTokens))];
+    ms.forEach(m=>{m.entry=canon;m.combined=true;m.villaTokens=allTok;
+      if(m!==prim){m.group=prim.group;COPY_KEYS.forEach(k=>m[k]=prim[k])}
+      m.flag=m.group==='unk'||m.group==='listed';m.drawOk=drawAgrees(m)});
+  });
+}
 function classify(p){
   BASEKEYS.forEach(k=>p[k]=p.base[k]);p.fromDrawing=false;p.remarks='';
   if(p.src==='wip')p.group='wip';
@@ -664,7 +699,7 @@ function classify(p){
     if(o.status&&GLABEL[o.status]&&o.status!==p.group){p.group=o.status;p.src=SRCOF[o.status];p.fromDrawing=false;p.wipstage=null;}
     ['stage','customer','contractor','sales'].forEach(k=>{if(o[k]!=null&&o[k]!=='')p[k]=o[k]});
     if(o.area!=null&&o.area!=='')p.area=+o.area;
-    if(o.villa){p.entry=o.villa;p.combined=/[&,]/.test(o.villa)}
+    if(o.villa&&!VILLA_OF[p.id]){p.entry=o.villa;p.combined=/[&,]/.test(o.villa)}
     p.remarks=o.remarks||'';
     if(p.group==='nyt'&&o.status==='nyt'&&!p.status)p.status='Unsold';
   }
@@ -673,7 +708,7 @@ function classify(p){
   p.flag=p.group==='unk'||p.group==='listed';
   p.drawOk=drawAgrees(p);
 }
-PLOTS.forEach(classify);
+PLOTS.forEach(classify);groupPass();
 let contractors=[];
 function calcContractors(){contractors=[...new Set(PLOTS.filter(p=>p.group==='wip').map(p=>p.contractor||'Not assigned'))].sort((a,b)=>a==='Not assigned'?1:b==='Not assigned'?-1:a.localeCompare(b))}
 calcContractors();
@@ -918,7 +953,7 @@ tabs.forEach(t=>t.addEventListener('click',()=>show(t.getAttribute('aria-control
 /* ---- derived villa view (recomputed on every change) ---- */
 const vkey=p=>p.entry||p.id;
 const OFFMAP=[{villa:'14B',group:'done',series:'Numbered'},Object.assign({group:'wip'},DATA.wip.find(w=>w.villa==='CX13')||{villa:'CX13',series:'CX',stage:STAGES[0]})];
-function offmapOpen(){const keys=new Set(PLOTS.map(p=>norm(vkey(p))));return OFFMAP.filter(o=>!keys.has(norm(o.villa))&&!PLOTS.some(p=>norm(p.id)===norm(o.villa)))}
+function offmapOpen(){const keys=new Set(PLOTS.map(p=>nid(vkey(p))));const toks=new Set(PLOTS.flatMap(p=>p.villaTokens||[]));return OFFMAP.filter(o=>!keys.has(nid(o.villa))&&!toks.has(nid(o.villa))&&!PLOTS.some(p=>nid(p.id)===nid(o.villa)))}
 function villasBy(g){const m=new Map();PLOTS.forEach(p=>{const pg=p.fromDrawing?'unk':p.group;if(pg!==g)return;const k=vkey(p);if(!m.has(k))m.set(k,p)});return m}
 let W=[],N=[],VC={};
 function deriveRows(){
@@ -945,8 +980,8 @@ function renderSummary(){
   h+=`<tr><td><b>Villas with a status</b></td><td class="num"><b>${tv}</b></td><td class="num"><b>${tp}</b></td></tr>`;
   h+=`<tr><td>Not in any list (plots without a status)</td><td class="num">${VC.unk}</td><td class="num">${pc('unk')}</td></tr>`;
   h+=`<tr><td><b>Total counted</b></td><td class="num"><b>${tv+VC.unk}</b></td><td class="num"><b>${tp+pc('unk')}</b></td></tr>`;
-  h+=`<tr><td>Project total</td><td class="num">258</td><td class="num"></td></tr>`;
-  const diff=tv+VC.unk-258;h+=`<tr><td><b>Difference to resolve</b></td><td class="num"><b style="color:${diff?'#c62828':'inherit'}">${diff>0?'+':''}${diff}</b></td><td class="num"></td></tr>`;
+  h+=`<tr><td>Project total</td><td class="num">${PROJECT_TOTAL}</td><td class="num"></td></tr>`;
+  const diff=tv+VC.unk-PROJECT_TOTAL;h+=`<tr><td><b>Difference to resolve</b></td><td class="num"><b style="color:${diff?'#c62828':'inherit'}">${diff>0?'+':''}${diff}</b></td><td class="num"></td></tr>`;
   $('#finalTbl').innerHTML=h;
   // checks
   const byStage=PLOTS.filter(p=>p.group==='wip'&&!p.drawOk);const unk=PLOTS.filter(p=>p.group==='unk');const unkGreen=unk.filter(p=>p.hatch==='handover');
@@ -954,7 +989,7 @@ function renderSummary(){
   const both=PLOTS.filter(p=>p.group==='wip'&&p.salesstatus).map(p=>p.id);
   const om=offmapOpen();const edited=PLOTS.filter(p=>p.ov).length;
   const li=[];
-  li.push(`Total: ${tv+VC.unk} villas counted against 258 (${diff===0?'matches':'difference '+(diff>0?'+':'')+diff}). Fix it in Data entry: give plots a status, or join plots into one villa with the “Villa” field (e.g. “14 & 14A”).`);
+  li.push(`Total: ${tv+VC.unk} villas counted against ${PROJECT_TOTAL} (${diff===0?'matches':'difference '+(diff>0?'+':'')+diff}). Fix it in Data entry: give plots a status, or join plots into one villa with the “Villa” field (e.g. “14 & 14A”).`);
   if(edited)li.push(`${edited} plots have been updated in Data entry.`);
   if(sup.length)li.push(`Newest list used: ${sup.join(', ')} — the older WIP sheet still lists them under construction.`);
   if(both.length)li.push(`${both.join(', ')} are under construction and still unsold (in both the WIP and NYT-WIP sheets).`);
@@ -1001,7 +1036,7 @@ function renderTables(){
   drawWip();drawNyt();
 }
 function refreshAll(){
-  PLOTS.forEach(classify);calcContractors();PLOTS.forEach(renderPlotEl);
+  PLOTS.forEach(classify);groupPass();calcContractors();PLOTS.forEach(renderPlotEl);
   deriveRows();paint();renderSummary();renderTables();if(typeof renderEntry==='function')renderEntry();if(typeof renderDaily==='function')renderDaily();
   if(selected)showDetail(selected);
 }
@@ -1052,11 +1087,11 @@ function ringCenter(hk){
   const inner=ringAct?ringBreak(ringAct):[];
   const h=hk&&(inner.find(x=>x.key===hk)||RSEG.find(r=>r[0]===hk));
   if(h&&h.label){const tot=inner.reduce((a,b)=>a+b.n,0)||1;set(Math.round(h.n/tot*100)+'%',h.label,`${h.n} of ${tot}`);return}
-  if(h){set(Math.round(v[h[0]]/258*100)+'%',h[1],h[0]==='other'?`${v[h[0]]} villas · see Summary`:`${v[h[0]]} of 258 villas`);return}
+  if(h){set(Math.round(v[h[0]]/PROJECT_TOTAL*100)+'%',h[1],h[0]==='other'?`${v[h[0]]} villas · see Summary`:`${v[h[0]]} of ${PROJECT_TOTAL} villas`);return}
   const sub=inner.find(x=>x.key===ringSub);
   if(sub){set(String(sub.n),sub.label,'villas');return}
   if(ringAct){const a=RSEG.find(r=>r[0]===ringAct);set(String(v[ringAct]),a[1],'click inside to filter')}
-  else set(Math.round(v.done/258*100)+'%','handed over',`${v.done} of 258 villas`);
+  else set(Math.round(v.done/PROJECT_TOTAL*100)+'%','handed over',`${v.done} of ${PROJECT_TOTAL} villas`);
 }
 function kpiFor(k){return document.querySelector(`.kpi[data-go="${k}"]`)}
 function ringHL(k){document.querySelectorAll('.kpi').forEach(x=>x.classList.remove('hl'));if(k&&kpiFor(k))kpiFor(k).classList.add('hl');
@@ -1078,7 +1113,7 @@ function ringSubGo(key){const it=ringBreak(ringAct).find(x=>x.key===key);if(!it)
 function ringPick(t){if(!t||!t.dataset.k)return;const k=t.dataset.k;if(RSEG.some(r=>r[0]===k)&&(!ringAct||t.classList.contains('seg')||!ringAct))ringGo(k);else ringSubGo(k)}
 const tipEl=$('#ringTip');
 function tipShow(t,e){const k=t.dataset.k;const inner=ringAct?ringBreak(ringAct):[];const it=inner.find(x=>x.key===k);const r=RSEG.find(x=>x[0]===k);const v=ringVals();
-  const lab=it?it.label:r?r[1]:'';const n=it?it.n:r?v[k]:0;const tot=it?inner.reduce((a,b)=>a+b.n,0):258;
+  const lab=it?it.label:r?r[1]:'';const n=it?it.n:r?v[k]:0;const tot=it?inner.reduce((a,b)=>a+b.n,0):PROJECT_TOTAL;
   tipEl.innerHTML=`<b>${esc(lab)}</b>${n} villas · ${Math.round(n/tot*100)}%<br><span style="opacity:.7">${it?'Click to show on the map':(ringAct===k?'Click to go back':'Click to break it down')}</span>`;tipEl.hidden=false;tipMove(e)}
 function tipMove(e){if(tipEl.hidden||!e||e.clientX==null)return;tipEl.style.left=Math.min(e.clientX+14,innerWidth-230)+'px';tipEl.style.top=(e.clientY+14)+'px'}
 ['ringSegs','ringInner','ringLeg'].forEach(id=>{const el=document.getElementById(id);
