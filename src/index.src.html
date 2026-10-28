@@ -646,7 +646,7 @@ let PROJECT_TOTAL=250;const REPORT_TOTAL=250;
 /* CX-8 and CX-10 are separate villas (TOTAL-VILLAS lists both; CX-10 is a Ravikanth Reddy plot, 28-10-2026) */
 const SPLIT=new Set(['CX-8','CX-10']);
 /* plots marked "Ravikanth Reddy" on the drawing (confirmed 28-10-2026) */
-const RR=new Set(['AX-7','AX-8','AX-10','AX-11','AX-13','AX-14','AX-15','CX-3','CX-10','CX-17','CX-18']);
+const RR=new Set(['AX-7','AX-8','AX-10','AX-11','AX-13','AX-14','AX-15','CX-3','CX-10','CX-17','CX-18','21']);
 const VILLA_OF={};COMBINED.forEach(([n,ids])=>ids.forEach(i=>VILLA_OF[i]=n));
 /* ---- villa grouping: combined plots count as one villa with one status ---- */
 const nid=v=>String(v).toUpperCase().replace(/[\s\-\/]/g,'');
@@ -1007,7 +1007,7 @@ function renderSummary(){
   li.push(`Counted by villa (combined plots = one villa): ${tv+VC.unk} villas on the master layout (${VC.rr} of them Ravikanth Reddy plots) against the report total of ${REPORT_TOTAL} (${diff===0?'matches':'difference '+(diff>0?'+':'')+diff}).`);
   li.push(`Report 27-10-2026, TOTAL-VILLAS sheet: its 250 rows are 242 different villas (AX24 ×3, E6 ×2 and E35 / E-35 repeated; CX-8 + CX-10 and 1B + 1E entered separately although they are combined). The other villas come from the report's HO, WIP, NYT and work-status sheets: 107&108, 69&70, 21, E24, E28 and 101.`);
   li.push(`Combined villas follow the report's Combined Villas sheet plus the combinations written in its HO / WIP / ALL-Villas sheets (69&70, 107&108, 14A&14B, 1B&1E). 3 is its own villa (3A&4 is the combined one), 103 and 104 are two villas, and CX-8 and CX-10 are two villas (as in TOTAL-VILLAS; CX-10 is a Ravikanth Reddy plot). 1E&1F (ALL-Villas sheet) is not used: 1F is unsold in NYT-UTF and 1E is sold with 1B.`);
-  li.push(`Ravikanth Reddy plots (per drawing, confirmed 28-10-2026): AX-7, AX-8, AX-10, AX-11, AX-13, AX-14, AX-15, CX-3, CX-10, CX-17, CX-18 — counted as not yet started, sales status "Ravikanth Reddy". AX-7, AX-8, AX-13, AX-14 and AX-15 are not in the report's TOTAL-VILLAS sheet. AX-39 is in no sheet of the report and is not counted. CX-6 and CX-12 are in TOTAL-VILLAS with no status sheet, so they count as not yet started.`);
+  li.push(`Ravikanth Reddy plots (per drawing, confirmed 28-10-2026): AX-7, AX-8, AX-10, AX-11, AX-13, AX-14, AX-15, CX-3, CX-10, CX-17, CX-18 and 21 (21 was on the report's HO list) — counted as not yet started, sales status "Ravikanth Reddy". AX-7, AX-8, AX-13, AX-14 and AX-15 are not in the report's TOTAL-VILLAS sheet. AX-39 is in no sheet of the report and is not counted. CX-6 and CX-12 are in TOTAL-VILLAS with no status sheet, so they count as not yet started.`);
   li.push(`Handover list used: the right-hand HO list (matches the work-status sheet), plus 56 (left HO list and hatched as handed over on the drawing; its work-status row is blank). 7, 37 and 39 from the left list are still under construction in the Final-stage sheet. 45A, E3, E25 and E35 are handed over with snags still open.`);
   if(edited)li.push(`${edited} plots have been updated in Data entry.`);
   if(sup.length)li.push(`Newest list used: ${sup.join(', ')} — the older WIP sheet still lists them under construction.`);
