@@ -275,6 +275,11 @@ table.et .efe{font-size:12px;color:var(--accent)}
 table.et .efd{font-size:12px;color:#b45309}
 table.et .efc{font-size:18px;color:var(--muted);transition:transform .2s}
 table.et tr.efold.open .efc{transform:rotate(90deg)}
+.lsw{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--glass,var(--sheet));border:1px solid var(--glass-edge,var(--rule))}
+.lsw button{font:600 20px var(--f-display);border:0;background:transparent;color:var(--muted);padding:6px 16px;border-radius:999px;cursor:pointer;transition:all .15s}
+.lsw button:hover{color:var(--accent)}
+.lsw button.on{background:linear-gradient(135deg,#2563eb,#06b6d4);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.3)}
+@media (max-width:560px){.lsw button{font-size:15px;padding:6px 12px}}
 .extempty{align-items:center;text-align:center;padding:60px 18px}.extempty .regicon{font-size:34px}.extempty p{margin:0;color:var(--muted)}
 .reglock{align-items:center;text-align:center;padding:40px 18px}
 .reglock .regicon{font-size:34px}
@@ -437,7 +442,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
 
   <!-- SITE MAP -->
   <section class="panel" id="map" role="tabpanel" aria-labelledby="tab-map">
-    <div class="section-title"><h2>Master layout</h2><p>Colour the plots by stage, sales, contractor or drawing check. Click a plot for its details.</p></div>
+    <div class="section-title"><div class="lsw" role="group" aria-label="Layout"><button class="on" aria-pressed="true" data-lsw="map">Master layout</button><button aria-pressed="false" data-lsw="ext">Extension layout</button></div><p>Colour the plots by stage, sales, contractor or drawing check. Click a plot for its details.</p></div>
     <div class="mapbar-wrap">
     <div class="mapbar">
       <div class="seg" role="group" aria-label="Colour plots by">
@@ -625,7 +630,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
 
   <!-- EXTENSION LAYOUT -->
   <section class="panel" id="ext" role="tabpanel" aria-labelledby="tab-ext" hidden>
-    <div class="section-title"><h2>Extension layout</h2><p>Layout of the UTF extension.</p></div>
+    <div class="section-title"><div class="lsw" role="group" aria-label="Layout"><button aria-pressed="false" data-lsw="map">Master layout</button><button class="on" aria-pressed="true" data-lsw="ext">Extension layout</button></div><p>Layout of the UTF extension.</p></div>
     <div class="box extempty" id="extBody"><div class="regicon" aria-hidden="true">🗺️</div><p>The extension layout drawing will be shown here.</p></div>
   </section>
 
@@ -1496,6 +1501,7 @@ $('#regCsv').onclick=()=>{const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;con
 try{const s=JSON.parse(sessionStorage.getItem('utf-reg')||'null');if(s&&s.pin){REG.pin=s.pin;REG.name=s.name||'';regFetch(false)}}catch(e){}
 regSetState();
 
+document.querySelectorAll('[data-lsw]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.lsw)));
 /* ---- start ---- */
 document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.id==='m-'+mode));
 paint();
