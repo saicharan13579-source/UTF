@@ -285,7 +285,7 @@ table.et tr.efold.open .efc{transform:rotate(90deg)}
 .sumdraw{margin-top:28px;display:flex;flex-direction:column;gap:12px}
 .sumdraw td.mono,.sumdraw td.muted{white-space:nowrap}
 .extwrap{display:flex;flex-direction:column;gap:10px}
-.extview{position:relative;height:min(78vh,820px);overflow:hidden;border-radius:18px;background:#fff;border:1px solid var(--glass-edge,var(--rule));cursor:grab;touch-action:none;box-shadow:var(--shadow,0 8px 30px rgba(15,23,42,.08))}
+.extview{position:relative;height:min(78vh,820px);overflow:hidden;border-radius:22px;background:#8fa1b4;border:1px solid var(--glass-edge,var(--rule));cursor:grab;touch-action:none;box-shadow:var(--shadow,0 8px 30px rgba(15,23,42,.08))}
 .extview.drag{cursor:grabbing}
 .extview img{position:absolute;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;max-width:none}
 .extctl{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:6px}
@@ -669,10 +669,10 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
     <div class="section-title"><div class="lsw" role="group" aria-label="Layout"><button aria-pressed="false" data-lsw="map">Master layout</button><button class="on" aria-pressed="true" data-lsw="ext">Extension layout</button></div><p>UTF expected extension layout · drawing 28-10-2026. Scroll or pinch to zoom, drag to move.</p></div>
     <div class="extwrap">
       <div class="extview" id="extView" tabindex="0" aria-label="Extension layout drawing, zoomable">
-        <img id="extImg" src="extension_layout_s.webp" data-full="extension_layout.webp" alt="UTF expected extension layout" draggable="false">
+        <img id="extImg" src="extension_layout_s.webp?v=2" data-full="extension_layout.webp?v=2" alt="UTF expected extension layout" draggable="false">
         <div class="extctl"><button class="btn sm" id="extIn" aria-label="Zoom in">+</button><button class="btn sm" id="extOut" aria-label="Zoom out">−</button><button class="btn sm" id="extFit">Fit</button></div>
       </div>
-      <div class="extbar"><a class="btn sm" href="UTF_EXPECTED_EXTENSION_LAYOUT.pdf" target="_blank" rel="noopener">Open PDF</a><a class="btn sm" href="extension_layout.webp" download="UTF_extension_layout.webp">Download image</a><span class="hint" style="margin:0">Source: UTF_EXPECTED_EXTENSION_LAYOUT.pdf (AutoCAD, 28-10-2026)</span></div>
+      <div class="extbar"><a class="btn sm" href="UTF_EXPECTED_EXTENSION_LAYOUT.pdf" target="_blank" rel="noopener">Open PDF</a><a class="btn sm" href="extension_layout.webp?v=2" download="UTF_extension_layout.webp">Download image</a><span class="hint" style="margin:0">Source: UTF_EXPECTED_EXTENSION_LAYOUT.pdf (AutoCAD, 28-10-2026)</span></div>
     </div>
   </section>
 
