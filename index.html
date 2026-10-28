@@ -287,7 +287,21 @@ table.et tr.efold.open .efc{transform:rotate(90deg)}
 .extwrap{display:flex;flex-direction:column;gap:10px}
 .extview{position:relative;height:min(78vh,820px);overflow:hidden;border-radius:22px;background:#8fa1b4;border:1px solid var(--glass-edge,var(--rule));cursor:grab;touch-action:none;box-shadow:var(--shadow,0 8px 30px rgba(15,23,42,.08))}
 .extview.drag{cursor:grabbing}
-.extview img{position:absolute;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;max-width:none}
+.extlayer{position:absolute;left:0;top:0;transform-origin:0 0}
+.extlayer img{position:absolute;left:0;top:0;width:100%;height:100%;user-select:none;-webkit-user-drag:none;max-width:none;transition:opacity .25s}
+.extold{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(15,23,42,.15);font-size:13px;z-index:2}
+.extold span{padding:0 8px;color:#475569;font-weight:600}
+.extold button{border:0;background:transparent;padding:5px 12px;border-radius:999px;cursor:pointer;font:600 13px var(--f-body);color:#334155}
+.extold button.on{background:linear-gradient(135deg,#2563eb,#06b6d4);color:#fff}
+.extctl{z-index:2}
+.extareas{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+@media (max-width:900px){.extareas{grid-template-columns:repeat(2,1fr)}}
+.extareas .xa{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:18px;background:var(--glass,var(--sheet));border:1px solid var(--glass-edge,var(--rule))}
+.extareas .xa b{font:600 26px var(--f-display);color:var(--ink)}.extareas .xa b small{font-size:13px;color:var(--muted);font-weight:500}
+.extareas .xa>span:last-child{font-size:12.5px;color:var(--muted)}
+.extareas .xa.new{border-color:#22d3ee;box-shadow:inset 4px 0 0 #06b6d4}
+.extareas .xa.tot{background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(6,182,212,.12))}
+.xparcels{margin-bottom:12px;font-size:14px}.xparcels summary{cursor:pointer;color:var(--accent);font-weight:600}.xparcels ul{margin:8px 0;padding-left:20px}
 .extctl{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:6px}
 .extctl .btn{min-width:38px}
 .extbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -667,9 +681,28 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
   <!-- EXTENSION LAYOUT -->
   <section class="panel" id="ext" role="tabpanel" aria-labelledby="tab-ext" hidden>
     <div class="section-title"><div class="lsw" role="group" aria-label="Layout"><button aria-pressed="false" data-lsw="map">Master layout</button><button class="on" aria-pressed="true" data-lsw="ext">Extension layout</button></div><p>UTF expected extension layout · drawing 28-10-2026. Scroll or pinch to zoom, drag to move.</p></div>
+    <div class="extareas">
+      <div class="xa"><span class="label">Existing layout</span><b>2,41,218 <small>sq yd</small></b><span>312 plots · about 49.8 acres of plot area</span></div>
+      <div class="xa new"><span class="label">Extension land</span><b>7 ac 8.5 <small>gts</small></b><span>288.5 guntas · about 34,909 sq yd · 3 parcels</span></div>
+      <div class="xa new"><span class="label">Extension plots</span><b>23,051 <small>sq yd</small></b><span>32 plots · about 4.8 acres of plot area</span></div>
+      <div class="xa tot"><span class="label">Total plot area</span><b>2,64,269 <small>sq yd</small></b><span>344 plots · about 54.6 acres</span></div>
+    </div>
+    <details class="xparcels"><summary>Extension parcels and how these are worked out</summary>
+      <ul>
+        <li><b>Parcel 1</b> (north, two blocks): approx. 2 acres 20 guntas = 100 gts</li>
+        <li><b>Parcel 2</b> (middle, next to the AX series): 2 acres 10 guntas = 90 gts</li>
+        <li><b>Parcel 3</b> (east, three blocks): 2 acres 18.5 guntas = 98.5 gts</li>
+        <li>The small cyan area at the far east has no area marked on the drawing.</li>
+      </ul>
+      <p class="hint" style="margin:0">Land areas are the acre-gunta values written on UTF_EXPECTED_EXTENSION_LAYOUT. Plot areas add up the sq yd marked on every plot of the drawing. 1 acre = 40 guntas = 4,840 sq yd; 1 gunta = 121 sq yd.</p>
+    </details>
     <div class="extwrap">
       <div class="extview" id="extView" tabindex="0" aria-label="Extension layout drawing, zoomable">
-        <img id="extImg" src="extension_layout_s.webp?v=2" data-full="extension_layout.webp?v=2" alt="UTF expected extension layout" draggable="false">
+        <div class="extlayer" id="extLayer">
+          <img id="extImg" src="extension_layout_s.webp?v=2" data-full="extension_layout.webp?v=2" alt="UTF expected extension layout" draggable="false">
+          <img id="extNew" src="extension_new_s.webp" data-full="extension_new.webp" alt="" aria-hidden="true" draggable="false">
+        </div>
+        <div class="extold" role="group" aria-label="Old layout"><span>Old layout</span><button data-old="1" class="on">Show</button><button data-old=".22">Fade</button><button data-old="0">Hide</button></div>
         <div class="extctl"><button class="btn sm" id="extIn" aria-label="Zoom in">+</button><button class="btn sm" id="extOut" aria-label="Zoom out">−</button><button class="btn sm" id="extFit">Fit</button></div>
       </div>
       <div class="extbar"><a class="btn sm" href="UTF_EXPECTED_EXTENSION_LAYOUT.pdf" target="_blank" rel="noopener">Open PDF</a><a class="btn sm" href="extension_layout.webp?v=2" download="UTF_extension_layout.webp">Download image</a><span class="hint" style="margin:0">Source: UTF_EXPECTED_EXTENSION_LAYOUT.pdf (AutoCAD, 28-10-2026)</span></div>
@@ -1583,13 +1616,13 @@ $('#editLog').addEventListener('click',e=>{const b=e.target.closest('[data-dlday
   const L=EDITS.filter(d=>istDay(d.at)===day);csvDownload(`UTF_changes_${day.split('-').reverse().join('-')}.csv`,LOG_HEAD,L.map(logRow));toast(`Downloaded ${L.length} changes for this day.`)});
 
 /* ---- extension layout viewer: zoom + pan ---- */
-(()=>{const V=$('#extView'),I=$('#extImg');let z=1,x=0,y=0,W=4678,H=3306,fitZ=1,full=false;
+(()=>{const V=$('#extView'),I=$('#extLayer');let z=1,x=0,y=0,W=4678,H=3306,fitZ=1,full=false;
   const ap=()=>{I.style.width=W+'px';I.style.height=H+'px';I.style.transform=`translate(${x}px,${y}px) scale(${z})`};
   const fit=()=>{const r=V.getBoundingClientRect();if(!r.width)return;fitZ=Math.min(r.width/W,r.height/H);z=fitZ;x=(r.width-W*z)/2;y=(r.height-H*z)/2;ap()};
-  const zoomAt=(f,cx,cy)=>{const nz=Math.max(fitZ*0.8,Math.min(fitZ*14,z*f));x=cx-(cx-x)*nz/z;y=cy-(cy-y)*nz/z;z=nz;ap();if(!full&&z>fitZ*1.6){full=true;I.src=I.dataset.full}};
+  const zoomAt=(f,cx,cy)=>{const nz=Math.max(fitZ*0.8,Math.min(fitZ*14,z*f));x=cx-(cx-x)*nz/z;y=cy-(cy-y)*nz/z;z=nz;ap();if(!full&&z>fitZ*1.6){full=true;['#extImg','#extNew'].forEach(q=>{const im=$(q);im.src=im.dataset.full})}};
   V.addEventListener('wheel',e=>{e.preventDefault();const r=V.getBoundingClientRect();zoomAt(e.deltaY<0?1.2:1/1.2,e.clientX-r.left,e.clientY-r.top)},{passive:false});
   const pts=new Map();let last=null,pinch=null;
-  V.addEventListener('pointerdown',e=>{if(e.target.closest('.extctl'))return;V.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);V.classList.add('drag');last=[e.clientX,e.clientY];pinch=null});
+  V.addEventListener('pointerdown',e=>{if(e.target.closest('.extctl,.extold'))return;V.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);V.classList.add('drag');last=[e.clientX,e.clientY];pinch=null});
   V.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,[e.clientX,e.clientY]);const r=V.getBoundingClientRect();
     if(pts.size===2){const [a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);const c=[(a[0]+b[0])/2-r.left,(a[1]+b[1])/2-r.top];if(pinch)zoomAt(d/pinch,c[0],c[1]);pinch=d;return}
     if(last){x+=e.clientX-last[0];y+=e.clientY-last[1];last=[e.clientX,e.clientY];ap()}});
@@ -1599,6 +1632,8 @@ $('#editLog').addEventListener('click',e=>{const b=e.target.closest('[data-dlday
   $('#extIn').onclick=()=>mid(1.4);$('#extOut').onclick=()=>mid(1/1.4);$('#extFit').onclick=fit;
   V.addEventListener('keydown',e=>{if(e.key==='+'||e.key==='=')mid(1.4);else if(e.key==='-')mid(1/1.4);else if(e.key==='0')fit()});
   new ResizeObserver(()=>{if(!V.offsetWidth)return;if(Math.abs(z-fitZ)<1e-6||!V.dataset.init){V.dataset.init=1;fit()}}).observe(V);
+  document.querySelectorAll('[data-old]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-old]').forEach(x=>x.classList.toggle('on',x===b));$('#extImg').style.opacity=b.dataset.old;try{localStorage.setItem('utf-extold',b.dataset.old)}catch(e){}}));
+  try{const o=localStorage.getItem('utf-extold');const b=o&&document.querySelector(`[data-old="${o}"]`);if(b)b.click()}catch(e){}
   ap();})();
 /* ---- start ---- */
 document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.id==='m-'+mode));
