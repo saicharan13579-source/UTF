@@ -294,8 +294,8 @@ table.et tr.efold.open .efc{transform:rotate(90deg)}
 .extold button{border:0;background:transparent;padding:5px 12px;border-radius:999px;cursor:pointer;font:600 13px var(--f-body);color:#334155}
 .extold button.on{background:linear-gradient(135deg,#2563eb,#06b6d4);color:#fff}
 .extctl{z-index:2}
-.extareas{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
-@media (max-width:900px){.extareas{grid-template-columns:repeat(2,1fr)}}
+.extareas{display:grid;grid-template-columns:repeat(2,minmax(0,360px));gap:12px;margin-bottom:12px}
+@media (max-width:560px){.extareas{grid-template-columns:1fr}}
 .extareas .xa{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:18px;background:var(--glass,var(--sheet));border:1px solid var(--glass-edge,var(--rule))}
 .extareas .xa b{font:600 26px var(--f-display);color:var(--ink)}.extareas .xa b small{font-size:13px;color:var(--muted);font-weight:500}
 .extareas .xa>span:last-child{font-size:12.5px;color:var(--muted)}
@@ -682,10 +682,8 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
   <section class="panel" id="ext" role="tabpanel" aria-labelledby="tab-ext" hidden>
     <div class="section-title"><div class="lsw" role="group" aria-label="Layout"><button aria-pressed="false" data-lsw="map">Master layout</button><button class="on" aria-pressed="true" data-lsw="ext">Extension layout</button></div><p>UTF expected extension layout · drawing 28-10-2026. Scroll or pinch to zoom, drag to move.</p></div>
     <div class="extareas">
-      <div class="xa"><span class="label">Existing layout</span><b>2,41,218 <small>sq yd</small></b><span>312 plots · about 49.8 acres of plot area</span></div>
+      <div class="xa new"><span class="label">Extension plots</span><b>23,051 <small>sq yd</small></b><span>32 plots · about 4.8 acres</span></div>
       <div class="xa new"><span class="label">Extension land</span><b>7 ac 8.5 <small>gts</small></b><span>288.5 guntas · about 34,909 sq yd · 3 parcels</span></div>
-      <div class="xa new"><span class="label">Extension plots</span><b>23,051 <small>sq yd</small></b><span>32 plots · about 4.8 acres of plot area</span></div>
-      <div class="xa tot"><span class="label">Total plot area</span><b>2,64,269 <small>sq yd</small></b><span>344 plots · about 54.6 acres</span></div>
     </div>
     <details class="xparcels"><summary>Extension parcels and how these are worked out</summary>
       <ul>
