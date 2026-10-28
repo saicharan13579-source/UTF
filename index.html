@@ -410,7 +410,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
 <div class="wrap">
   <header class="hero">
     <div>
-      <span class="eyebrow">Site map &amp; progress portal · data as of 27-10-2026 · checked 28-10-2026</span>
+      <span class="eyebrow">Site map &amp; progress portal · data as of 28-10-2026</span>
       <h1>UTF<span>.</span></h1>
       <p>Every villa on the master layout, live-coloured by construction stage, sales status or contractor. Tap a number below or any plot on the map to dig in.</p>
     </div>
@@ -591,8 +591,8 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
     <div class="section-title"><h2>Summary</h2><p>Final counts, daily progress, stages, contractors and open questions.</p></div>
     <div class="grid2">
       <div class="card">
-        <h2>Final status, 26-10-2026</h2>
-        <p class="sub">Villas (as listed) and map plots. Newest list wins: handover list, then sold list, then WIP sheet, then NYT-WIP.</p>
+        <h2>Final status (live)</h2>
+        <p class="sub">Villas (combined plots count once) and map plots as they stand now: project report 27-10-2026, site checks 28-10-2026 and every Data entry change since.</p>
         <table class="cmp">
           <thead><tr><th>Status</th><th class="num">Villas</th><th class="num">Plots on map</th></tr></thead>
           <tbody id="finalTbl"></tbody>
@@ -683,7 +683,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
 
   <footer>
     <span>UTF · Site portal</span>
-    <span>Sources: UTF_LAYOUT_1_11 (plot outlines), UTF_LAYOUT_1 (status hatch), WIP-UTF-VILLAS, NYT-WIP, UTF-HO-VILLAS 26-10-2026, sold list confirmed 26-10-2026</span>
+    <span>Sources: UTF_LAYOUT_1_11 (plot outlines), UTF_LAYOUT_1 (status hatch), UTF project report 27-10-2026, site checks 28-10-2026, Data entry changes</span>
   </footer>
 </div>
 <div class="tip" id="tip" hidden></div>
@@ -1109,13 +1109,15 @@ function renderSummary(){
   const both=PLOTS.filter(p=>p.group==='wip'&&p.salesstatus).map(p=>p.id);
   const om=offmapOpen();const edited=PLOTS.filter(p=>p.ov).length;
   const li=[];
-  li.push(`Counted by villa (combined plots = one villa): ${tv+VC.unk} villas on the master layout (${VC.rr} of them Ravikanth Reddy plots) against the report total of ${REPORT_TOTAL} (${diff===0?'matches':'difference '+(diff>0?'+':'')+diff}).`);
-  li.push(`Report 27-10-2026, TOTAL-VILLAS sheet: its 250 rows are 242 different villas (AX24 ×3, E6 ×2 and E35 / E-35 repeated; CX-8 + CX-10 and 1B + 1E entered separately although they are combined). The other villas come from the report's HO, WIP, NYT and work-status sheets: 107&108, 69&70, 21, E24, E28 and 101.`);
-  li.push(`Combined villas follow the report's Combined Villas sheet plus the combinations written in its HO / WIP / ALL-Villas sheets (69&70, 107&108, 14A&14B, 1B&1E). 3 is its own villa (3A&4 is the combined one), 103 and 104 are two villas, and CX-8 and CX-10 are two villas (as in TOTAL-VILLAS; CX-10 is a Ravikanth Reddy plot). 1E&1F (ALL-Villas sheet) is not used: 1F is unsold in NYT-UTF and 1E is sold with 1B.`);
-  li.push(`Ravikanth Reddy plots (per drawing, confirmed 28-10-2026): AX-7, AX-8, AX-10, AX-11, AX-13, AX-14, AX-15, CX-3, CX-10, CX-17, CX-18 (updated 28-10-2026) and 21 (21 was on the report's HO list) — counted as not yet started, sales status "Ravikanth Reddy". AX-7, AX-8, AX-13, AX-14 and AX-15 are not in the report's TOTAL-VILLAS sheet. CX-6 and CX-12 are in TOTAL-VILLAS with no status sheet, so they count as not yet started.`);
-  li.push(`Site team, 28-10-2026: CX-15, CX-16, CX-19 to CX-27, AX-39 and the unsold plots of the 1, 2 and 3 series (1J, 1K & 1L, 1M, 1N, 1O, 2B–2E, 3B, 3C) are open and not plotted; sold units in those series are unchanged. 1A & 1F and 1C & 1D are combined villas, unsold, customer choice. 101 is sold and handed over. 40E is sold, plotted, customer choice. AX-6 and E29 are unsold, customer choice.`);
-  li.push(`Site check, 28-10-2026: E3, E25, E35, 7 and 39 handed over; 34 and 36 tiling; 9F, CX-2, CX-3, CX-4 and CX-10 foundation & structure; 9A, E12, E14 & 23 and E52 & 53 plastering; 18C tiling; AX 16 & 23 block work; CX-8 & 11 one villa, sold, not started; 2A complete but not sold; 37 not handed over (landscape pending); 21 handed over (Ravikanth Reddy); 101 sold and handed over. These plots no longer show as tracker-vs-drawing differences.`);
-  li.push(`Handover list used: the right-hand HO list (matches the work-status sheet), plus 56 (left HO list and hatched as handed over on the drawing; its work-status row is blank). 7, 37 and 39 from the left list are still under construction in the Final-stage sheet. 45A, E3, E25 and E35 are handed over with snags still open.`);
+  {const rr=g=>[...new Set(PLOTS.filter(p=>p.group===g&&p.sales==='Ravikanth Reddy').map(vkey))].sort((x,y)=>String(x).localeCompare(String(y),undefined,{numeric:true}));
+   const tot=tv+VC.unk;
+   li.push(`${tot} villas on the master layout, counted by villa (combined plots count once). The report's TOTAL-VILLAS sheet has ${REPORT_TOTAL} rows; the difference is explained below.`);
+   li.push(`Report 27-10-2026, TOTAL-VILLAS sheet: its 250 rows are 242 different villas (AX24 ×3, E6 ×2 and E35 / E-35 repeated; CX-8 + CX-10 and 1B + 1E entered as rows of their own). Villas missing from it but in the report's other sheets or confirmed by the site team: 107 & 108, 69 & 70, 21, E24, E28, 101, AX-7, AX-8, AX-13, AX-14, AX-15 and AX-39.`);
+   li.push(`Combined villas: the report's Combined Villas sheet plus 69 & 70, 107 & 108, 14A & 14B, 1B & 1E, 1A & 1F, 1C & 1D and CX-8 & 11 (site team, 28-10-2026). 3, 103, 104 and CX-10 are villas of their own.`);
+   const rrd=rr('done'),rrw=rr('wip'),rrn=rr('nyt');
+   li.push(`Ravikanth Reddy plots (${VC.rr}): ${[rrn.length?'not yet started '+rrn.join(', '):'',rrw.length?'under construction '+rrw.join(', '):'',rrd.length?'handed over '+rrd.join(', '):''].filter(Boolean).join('; ')}.`);
+   li.push(`Sales status, site team 28-10-2026: CX-15, CX-16, CX-19 to CX-27, AX-39 and the unsold plots of the 1, 2 and 3 series are open and not plotted; 1A & 1F, 1C & 1D, AX-6 and E29 are customer choice; 40E is sold, plotted, customer choice.`);
+   li.push(`Handover: the report's right-hand HO list, plus 56 and the site checks of 28-10-2026 (E3, E25, E35, 7, 39, 21 and 101). 37 is not handed over (landscape pending). 2A is complete but not sold, shown as ready to hand over.`);}
   if(edited)li.push(`${edited} plots have been updated in Data entry.`);
   if(sup.length)li.push(`Newest list used: ${sup.join(', ')} — the older WIP sheet still lists them under construction.`);
   if(both.length)li.push(`${both.join(', ')} are under construction and still unsold (in both the WIP and NYT-WIP sheets).`);
