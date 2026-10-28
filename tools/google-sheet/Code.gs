@@ -10,15 +10,20 @@
  *   daily    – counts per day (handed over, under construction, sold, unsold, needs status, changes)
  *   current  – full list of all plots as the site last showed them
  *   Snapshot YYYY-MM-DD – copy of "current" taken every evening at 9 pm IST
+ *   registration – UTF registration details (private: only read or written with REG_PIN)
+ *   reg_edits    – change log of the registration tab
  */
 const PIN = '2025';                      // editor PIN — change here and re-deploy to change it
+const REG_PIN = 'UTF2026';               // PIN for the "UTF Registration Details" tab
 const TZ = 'Asia/Kolkata';
 const SHEET_ID = '1ETbKpnj1TzfkVXNbkBnM49PZgkCFx9vnPkaEcvE86mg';   // the "UTF site data" Google Sheet
 const SHEETS = {
   plots:   ['id','status','stage','customer','contractor','area','sales','villa','remarks','by','at'],
   edits:   ['at','plot','what','by'],
   daily:   ['date','done','wip','sold','nyt','needs','changes','at'],
-  current: ['plot','villa','series','status','stage','customer','contractor','area','sales','remarks','edited']
+  current: ['plot','villa','series','status','stage','customer','contractor','area','sales','remarks','edited'],
+  registration: ['Villa','Plot(s)','Series','Customer','Registration status','Registration date','Document no.','Sub-registrar office','Remarks'],
+  reg_edits: ['at','row','villa','what','by']
 };
 
 /** Run once from the Apps Script editor (select "setup", press Run, allow access). */
@@ -64,6 +69,10 @@ function doPost(e) {
   lock.waitLock(20000);
   try {
     if (b.action === 'check') return out({ ok: String(b.pin) === PIN });
+    if (String(b.action || '').indexOf('reg_') === 0) {           // registration tab: its own PIN, never in doGet
+      if (String(b.pin) !== REG_PIN) return out({ ok: false, error: 'pin' });
+      return out(regAction(b));
+    }
     if (b.action === 'sync') {                       // first visit of the day: record counts if missing
       if (sh('current').getLastRow() < 2 && b.current) writeCurrent(b.current);
       upsertDaily(b.counts, false);
@@ -130,3 +139,55 @@ function dailySnapshot() {
   }
 }
 
+
+/* ---- UTF Registration Details (private) ---- */
+function regRead() {
+  const s = sh('registration'), lr = s.getLastRow(), lc = Math.max(1, s.getLastColumn());
+  const v = s.getRange(1, 1, Math.max(1, lr), lc).getValues();
+  const headers = v[0].map(String);
+  const rows = [];
+  for (let i = 1; i < v.length; i++) {
+    const r = v[i].map((c, j) => c instanceof Date ? Utilities.formatDate(c, TZ, 'dd-MM-yyyy') : String(c));
+    if (r.join('') !== '') rows.push({ row: i + 1, v: r });
+  }
+  return { headers: headers, rows: rows };
+}
+function regAction(b) {
+  const s = sh('registration'), log = sh('reg_edits'), now = new Date().toISOString(), who = String(b.editor || '');
+  if (b.action === 'reg_check') return { ok: true };
+  if (b.action === 'reg_get') {
+    const d = regRead();
+    const l = rows('reg_edits').sort((a, c) => String(c.at).localeCompare(String(a.at))).slice(0, 300);
+    return { ok: true, headers: d.headers, rows: d.rows, log: l };
+  }
+  if (b.action === 'reg_save') {
+    const r = Number(b.row), n = s.getLastColumn();
+    if (!(r >= 2 && r <= s.getLastRow())) return { ok: false, error: 'row' };
+    const vals = (b.values || []).slice(0, n).map(x => x == null ? '' : String(x));
+    while (vals.length < n) vals.push('');
+    s.getRange(r, 1, 1, n).setValues([vals]);
+    log.appendRow([now, String(r), vals[0], String(b.what || ''), who]);
+    return { ok: true, row: r };
+  }
+  if (b.action === 'reg_add') {
+    const n = s.getLastColumn();
+    const vals = (b.values || []).slice(0, n).map(x => x == null ? '' : String(x));
+    while (vals.length < n) vals.push('');
+    s.appendRow(vals);
+    const r = s.getLastRow();
+    log.appendRow([now, String(r), vals[0], 'added', who]);
+    return { ok: true, row: r };
+  }
+  if (b.action === 'reg_import') {                 // replace the whole tab (used once to load the Excel)
+    const h = (b.headers || []).map(String), rs = (b.rows || []).map(r => h.map((_, j) => r[j] == null ? '' : String(r[j])));
+    if (!h.length) return { ok: false, error: 'headers' };
+    s.clear();
+    s.getRange(1, 1, 1 + rs.length, h.length).setNumberFormat('@');
+    s.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold');
+    if (rs.length) s.getRange(2, 1, rs.length, h.length).setValues(rs);
+    s.setFrozenRows(1);
+    log.appendRow([now, '', '', 'imported ' + rs.length + ' rows', who]);
+    return { ok: true, count: rs.length };
+  }
+  return { ok: false, error: 'action' };
+}

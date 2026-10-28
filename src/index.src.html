@@ -275,6 +275,12 @@ table.et .efe{font-size:12px;color:var(--accent)}
 table.et .efd{font-size:12px;color:#b45309}
 table.et .efc{font-size:18px;color:var(--muted);transition:transform .2s}
 table.et tr.efold.open .efc{transform:rotate(90deg)}
+.reglock{align-items:center;text-align:center;padding:40px 18px}
+.reglock .regicon{font-size:34px}
+.reglock p{margin:0;color:var(--muted)}
+#regTable{min-width:900px}
+#regTable td.rn{color:var(--muted);font:12px var(--f-mono);width:40px}
+#regTable th{white-space:nowrap}
 table.et tr.edited td.v::after{content:" ●";color:var(--accent);font-size:10px}
 .et .when{font-size:11px;color:var(--muted);white-space:nowrap}
 .et .acts{display:flex;gap:6px;white-space:nowrap}
@@ -416,6 +422,7 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
     <button role="tab" id="tab-entry" aria-controls="entry" aria-selected="false">Data entry</button>
     <button role="tab" id="tab-summary" aria-controls="summary" aria-selected="false">Summary</button>
     <button role="tab" id="tab-drawings" aria-controls="drawings" aria-selected="false">Drawings</button>
+    <button role="tab" id="tab-reg" aria-controls="reg" aria-selected="false"><span aria-hidden="true">🔒 </span>UTF Registration Details</button>
   </nav>
 
   <!-- SITE MAP -->
@@ -603,6 +610,32 @@ footer{border-top:1px solid var(--rule-strong);margin-top:8px}
     <div class="note">
       <b>Check with the sales and project team</b>
       <ul id="checks"></ul>
+    </div>
+  </section>
+
+  <!-- REGISTRATION (private, own PIN; data only comes from the sheet after the PIN is checked) -->
+  <section class="panel" id="reg" role="tabpanel" aria-labelledby="tab-reg" hidden>
+    <div class="entryhead">
+      <div>
+        <h2>UTF Registration Details</h2>
+        <p class="hint" style="margin:4px 0 0">Private. Registration details load only after the registration PIN is entered, and stay hidden for everyone else.</p>
+      </div>
+      <div class="pinbox"><div id="regState" class="estate ro">Locked</div><div id="regPinUi" class="pinui"></div></div>
+    </div>
+    <div id="regLocked" class="box reglock"><div class="regicon" aria-hidden="true">🔒</div><p>Enter your name and the registration PIN to see and update the registration details.</p></div>
+    <div id="regBody" hidden>
+      <div class="filters">
+        <label><span class="label">Find</span><input id="rq" type="search" placeholder="Villa, customer, document no…"></label>
+        <span class="count" id="rcount"></span>
+        <button class="btn sm" id="regAdd">Add row</button>
+        <button class="btn sm" id="regCsv">Download CSV</button>
+        <button class="btn" id="regSaveAll" disabled>Save all changes</button>
+      </div>
+      <div class="tablewrap"><table class="t et" id="regTable"><thead></thead><tbody></tbody></table></div>
+      <div class="box">
+        <h3>Registration changes</h3>
+        <ul id="regLog" class="elog"><li class="muted">No changes yet.</li></ul>
+      </div>
     </div>
   </section>
 
@@ -1379,10 +1412,64 @@ canWrite=!!(API&&unlocked);
 setState();renderEntry();renderDaily();renderLog(EDITS);
 if(API){pull(true);setInterval(()=>{if(!document.hidden)pull(false)},60000)}
 
+
+/* ---- UTF Registration Details: own PIN, data fetched only after the sheet accepts it ---- */
+const REG={pin:null,name:'',headers:[],rows:[],dirty:new Map(),log:[]};
+function regSetState(){
+  const st=$('#regState'),ui=$('#regPinUi');
+  if(!API){st.textContent='Data sheet not connected';ui.innerHTML='';return}
+  if(!REG.pin){
+    st.textContent='Locked';st.classList.add('ro');$('#regLocked').hidden=false;$('#regBody').hidden=true;
+    ui.innerHTML=`<input id="regName" type="text" autocomplete="name" placeholder="Your name" aria-label="Your name" style="width:150px;letter-spacing:0;font-family:var(--f-body)"><input id="regPin" type="password" autocomplete="off" placeholder="PIN" aria-label="Registration PIN"><button class="btn sm" id="regGo">Unlock</button><span class="err" id="regErr"></span>`;
+    const go=$('#regGo');const tryPin=async()=>{const v=$('#regPin').value.trim(),nm=$('#regName').value.trim();if(!nm){$('#regErr').textContent='Enter your name so changes show who made them.';return}if(!v)return;
+      go.disabled=true;go.textContent='Checking…';
+      try{const r=await apiPost({action:'reg_get',pin:v});
+        if(r.ok){REG.pin=v;REG.name=nm;try{sessionStorage.setItem('utf-reg',JSON.stringify({pin:v,name:nm}))}catch(e){}regLoad(r);regSetState();toast('Registration details unlocked.')}
+        else{$('#regErr').textContent=r.error==='pin'?'Wrong PIN. Try again.':(r.error==='action'?'The data sheet script needs the registration update.':'Could not open registration details.');$('#regPin').value='';go.disabled=false;go.textContent='Unlock'}}
+      catch(e){$('#regErr').textContent='Could not reach the data sheet.';go.disabled=false;go.textContent='Unlock'}};
+    go.onclick=tryPin;$('#regPin').onkeydown=e=>{if(e.key==='Enter')tryPin()};
+  }else{
+    st.textContent=`Unlocked · ${REG.name}`;st.classList.remove('ro');$('#regLocked').hidden=true;$('#regBody').hidden=false;
+    ui.innerHTML=`<button class="btn sm" id="regRefresh">Refresh</button><button class="btn sm" id="regLock">Lock</button>`;
+    $('#regLock').onclick=()=>{REG.pin=null;REG.headers=[];REG.rows=[];REG.dirty.clear();REG.log=[];try{sessionStorage.removeItem('utf-reg')}catch(e){}$('#regTable').tHead.innerHTML='';$('#regTable').tBodies[0].innerHTML='';$('#regLog').innerHTML='';regSetState()};
+    $('#regRefresh').onclick=()=>regFetch(true);
+  }
+}
+function regLoad(r){REG.headers=r.headers||[];REG.rows=r.rows||[];REG.log=r.log||[];REG.dirty.clear();regRender();regRenderLog()}
+async function regFetch(say){if(!REG.pin)return;try{const r=await apiPost({action:'reg_get',pin:REG.pin});if(r.ok){regLoad(r);if(say)toast('Registration details refreshed.')}else if(r.error==='pin'){REG.pin=null;regSetState()}}catch(e){if(say)toast('Could not reach the data sheet.')}}
+function regRender(){
+  const H=REG.headers,q=$('#rq').value.trim().toLowerCase();
+  $('#regTable').tHead.innerHTML=`<tr><th>#</th>${H.map(h=>`<th>${esc(h)}</th>`).join('')}<th></th></tr>`;
+  const rows=REG.rows.filter(r=>!q||r.v.join(' ').toLowerCase().includes(q));
+  $('#regTable').tBodies[0].innerHTML=rows.length?rows.map(r=>{const d=REG.dirty.get(r.row);const vals=d||r.v;
+    return `<tr data-row="${r.row}" class="${d?'dirty':''}"><td class="rn">${r.row-1}</td>${H.map((h,j)=>`<td><input data-j="${j}" value="${esc(vals[j]??'')}" aria-label="${esc(h)} row ${r.row-1}"></td>`).join('')}<td><button class="btn sm" data-act="rsave"${d?'':' disabled'}>Save</button></td></tr>`}).join('')
+    :`<tr><td colspan="${H.length+2}" class="muted">${REG.rows.length?'No rows match.':'No registration details yet.'}</td></tr>`;
+  $('#rcount').textContent=`${rows.length} of ${REG.rows.length} rows`;
+  $('#regSaveAll').disabled=!REG.dirty.size;
+}
+function regRenderLog(){const L=REG.log;$('#regLog').innerHTML=L.length?L.slice(0,100).map(d=>`<li><span class="when">${esc(fmtWhen(d.at))}</span><b>${esc(d.villa||('Row '+(Number(d.row)-1)))}</b><span>${esc(d.what||'')}</span><span class="muted">${esc(d.by||'')}</span></li>`).join(''):'<li class="muted">No changes yet.</li>'}
+$('#rq').addEventListener('input',regRender);
+$('#regTable').addEventListener('input',e=>{const i=e.target.closest('input[data-j]');if(!i)return;const tr=i.closest('tr');const row=+tr.dataset.row;const r=REG.rows.find(x=>x.row===row);
+  const d=REG.dirty.get(row)||r.v.slice();d[+i.dataset.j]=i.value;REG.dirty.set(row,d);tr.classList.add('dirty');tr.querySelector('[data-act=rsave]').disabled=false;$('#regSaveAll').disabled=false});
+async function regSave(row){const r=REG.rows.find(x=>x.row===row),d=REG.dirty.get(row);if(!r||!d)return false;
+  const what=REG.headers.map((h,j)=>(d[j]??'')!==(r.v[j]??'')?`${h} → ${d[j]||'—'}`:'').filter(Boolean).join('; ');
+  try{const x=await apiPost({action:'reg_save',pin:REG.pin,editor:REG.name,row,values:d,what});if(!x.ok)throw 0;
+    r.v=d.slice();REG.dirty.delete(row);REG.log.unshift({at:new Date().toISOString(),row:String(row),villa:d[0],what,by:REG.name});return true}catch(e){return false}}
+$('#regTable').addEventListener('click',async e=>{const b=e.target.closest('[data-act=rsave]');if(!b)return;const row=+b.closest('tr').dataset.row;b.disabled=true;
+  if(await regSave(row)){toast('Saved.');regRender();regRenderLog()}else{b.disabled=false;toast('Could not save. Try again.')}});
+$('#regSaveAll').onclick=async()=>{const rs=[...REG.dirty.keys()];$('#regSaveAll').disabled=true;let ok=0;for(const r of rs)if(await regSave(r))ok++;toast(`Saved ${ok} of ${rs.length} rows.`);regRender();regRenderLog()};
+$('#regAdd').onclick=async()=>{if(!REG.headers.length)return;const b=$('#regAdd');b.disabled=true;
+  try{const x=await apiPost({action:'reg_add',pin:REG.pin,editor:REG.name,values:REG.headers.map(()=>'')});if(!x.ok)throw 0;REG.rows.push({row:x.row,v:REG.headers.map(()=>'')});$('#rq').value='';regRender();
+    const tr=$('#regTable').querySelector(`tr[data-row="${x.row}"] input`);if(tr)tr.focus()}catch(e){toast('Could not add a row.')}b.disabled=false};
+$('#regCsv').onclick=()=>{const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;const csv=[REG.headers.map(q).join(',')].concat(REG.rows.map(r=>r.v.map(q).join(','))).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'}));a.download='UTF-registration-details.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)};
+try{const s=JSON.parse(sessionStorage.getItem('utf-reg')||'null');if(s&&s.pin){REG.pin=s.pin;REG.name=s.name||'';regFetch(false)}}catch(e){}
+regSetState();
+
 /* ---- start ---- */
 document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.id==='m-'+mode));
 paint();
 let start='map';const h=(location.hash||'').slice(1);
-if(['map','wip','nyt','entry','summary','drawings'].includes(h))start=h;else{try{const t=localStorage.getItem('utf-tab');if(t&&document.getElementById(t))start=t}catch(e){}}
+if(['map','wip','nyt','entry','summary','drawings','reg'].includes(h))start=h;else{try{const t=localStorage.getItem('utf-tab');if(t&&document.getElementById(t))start=t}catch(e){}}
 show(start);requestAnimationFrame(()=>{fit();if(vw.clientWidth<700)zoomAt(2.2,vw.clientWidth*0.45,vw.clientHeight*0.55);if(!RM)popTiles(PLOTS)});
 </script>
