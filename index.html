@@ -731,7 +731,7 @@ function drawAgrees(p){if(DRAW_CHECKED.has(p.id)&&!(p.ov&&String(p.ov.at||'')>DR
   if(p.src==='ho')return h==='handover'||h==='ready'||h==='none'&&['37','45A'].includes(p.id);
   return true}
 /* enrich plots: base data from files + live overrides from Data entry */
-const GROUPS=[['done','Handed over'],['wip','Under construction'],['sold','Sold · not started'],['nyt','Unsold · not started'],['listed','In WIP list · no progress'],['office','Site office'],['unk','Not in any list'],['out','Not in project report · not counted']];
+const GROUPS=[['done','Handed over'],['wip','Under construction'],['sold','Sold · not started'],['nyt','Unsold · not started'],['listed','In WIP list · no progress'],['office','Site office'],['unk','Not in any list'],['out','Removed · not counted']];
 const GLABEL=Object.fromEntries(GROUPS);
 const SRCOF={done:'ho',wip:'wip',sold:'sold',nyt:'nyt',listed:'listed',office:'none',unk:'none',out:'out'};
 const BASEKEYS=['work','acts','final','hold','src','stage','customer','contractor','area','bua','sales','status','salesstatus','entry','combined','plotted','wipstage','wipcustomer'];
@@ -739,10 +739,12 @@ PLOTS.forEach(p=>{p.base={};BASEKEYS.forEach(k=>p.base[k]=p[k])});
 let OV=(typeof SEED_OV!=='undefined'&&SEED_OV)||{};
 /* combined villas (2-4 plots = one villa): Combined Villas sheet + combinations used in the HO / WIP / work-status sheets of the 27-10-2026 report.
    On the drawing, plot 14 is 14B and CX-12A is CX-13. */
-const COMBINED=[["18A & 18B",["18A","18B"]],["AX 16 & 23",["AX-16","AX-23"]],["AX 26 & 31",["AX-26","AX-31"]],["AX 27 & 30",["AX-27","AX-30"]],["AX 28 & 29",["AX-28","AX-29"]],["AX 1, 2, 3, 4",["AX-1","AX-2","AX-3","AX-4"]],["AX 18 & 21",["AX-18","AX-21"]],["AX 25 & 32",["AX-25","AX-32"]],["AX 33 & 38",["AX-33","AX-38"]],["E 14 & 23",["E14","E23"]],["E 17 & 20",["E17","E20"]],["E 18 & 19",["E18","E19"]],["E 38 & 39",["E38","E39"]],["E 42 & 43",["E42","E43"]],["E 52 & 53",["E52","E53"]],["E 57, 58 & 59",["E57","E58","E59"]],["E 10 & 27",["E10","E27"]],["1G & 1H",["1G","1H"]],["3A & 4",["3A","4"]],["47 & 48",["47","48"]],["49 & 50",["49","50"]],["66 & 67A",["66","67A"]],["1K & 1L",["1K","1L"]],["69 & 70",["69","70"]],["107 & 108",["107","108"]],["14A & 14B",["14","14A"]],["1B & 1E",["1B","1E"]],["CX 8 & 11",["CX-8","CX-11"]],["1A & 1F",["1A","1F"]],["1C & 1D",["1C","1D"]]];
+const COMBINED=[["18A & 18B",["18A","18B"]],["AX 16 & 23",["AX-16","AX-23"]],["AX 26 & 31",["AX-26","AX-31"]],["AX 27 & 30",["AX-27","AX-30"]],["AX 28 & 29",["AX-28","AX-29"]],["AX 1, 2, 3, 4",["AX-1","AX-2","AX-3","AX-4"]],["AX 18 & 21",["AX-18","AX-21"]],["AX 25 & 32",["AX-25","AX-32"]],["AX 33 & 38",["AX-33","AX-38"]],["E 14 & 23",["E14","E23"]],["E 17 & 20",["E17","E20"]],["E 18 & 19",["E18","E19"]],["E 38 & 39",["E38","E39"]],["E 42 & 43",["E42","E43"]],["E 52 & 53",["E52","E53"]],["E 57, 58 & 59",["E57","E58","E59"]],["E 10 & 27",["E10","E27"]],["1G & 1H",["1G","1H"]],["3A & 4",["3A","4"]],["47 & 48",["47","48"]],["49 & 50",["49","50"]],["66 & 67A",["66","67A"]],["1K & 1L",["1K","1L"]],["69 & 70",["69","70"]],["107 & 108",["107","108"]],["14A & 14B",["14","14A"]],["1B & 1E",["1B","1E"]],["CX-8 & CX-11",["CX-8","CX-11"]],["103 & 104",["103","104"]],["1A & 1F",["1A","1F"]],["1C & 1D",["1C","1D"]]];
 let PROJECT_TOTAL=250;const REPORT_TOTAL=250;
 /* CX-8 and CX-10 are separate villas (TOTAL-VILLAS lists both; CX-10 is a Ravikanth Reddy plot, 28-10-2026) */
 const SPLIT=new Set(['CX-8','CX-10']);
+/* removed from the villa list on 11-11-2026 (shown on the drawing, never counted) */
+const REMOVED=new Set(['E36']);
 /* plots marked "Ravikanth Reddy" on the drawing (confirmed 28-10-2026) */
 const RR=new Set(['AX-7','AX-8','AX-10','AX-11','AX-13','AX-14','AX-15','CX-3','CX-10','CX-17','CX-18','21']);
 /* site-team instructions of 28-10-2026: these plots take the values in plots_joined.json; site edits made before then are ignored */
@@ -813,6 +815,7 @@ function classify(p){
     p.remarks=o.remarks||'';
     if(p.group==='nyt'&&o.status==='nyt'&&!p.status)p.status='Unsold';
   }
+  if(REMOVED.has(p.id)){p.group='out';p.src='out';p.stage='';p.remarks='Removed from the villa list (11-11-2026)';}
   p.stageIdx=p.group==='wip'?Math.max(0,STAGES.indexOf(p.stage)):-1;
   if(p.group==='wip'&&STAGES.indexOf(p.stage)<0)p.stage=STAGES[0];
   p.flag=p.group==='unk'||p.group==='listed';
@@ -828,17 +831,17 @@ const conColor=c=>c==='Not assigned'?'#ffffff':CON_COL[Math.max(0,contractors.in
 const MODES={
   progress:{title:"Construction progress",cats(){const c=[{grp:"Under construction"}];
       STAGES.forEach((s,i)=>c.push({key:'s'+i,label:SHORT[s],color:STAGE_COL[i]}));
-      c.push({grp:"Other"});c.push({key:'done',label:'Handed over (HO list)',color:C_DONE});c.push({key:'ns',label:'Not yet started',color:C_NS,ns:true});c.push({key:'sold',label:'Sold · construction not started',color:'#c4b5fd',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#bae6fd',ns:true});c.push({key:'unk',label:'Not in any list',color:'#cbd5e1',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});c.push({key:'out',label:'Not in project report (not counted)',color:'#eef2f6',ns:true});return c},
+      c.push({grp:"Other"});c.push({key:'done',label:'Handed over (HO list)',color:C_DONE});c.push({key:'ns',label:'Not yet started',color:C_NS,ns:true});c.push({key:'sold',label:'Sold · construction not started',color:'#c4b5fd',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#bae6fd',ns:true});c.push({key:'unk',label:'Not in any list',color:'#cbd5e1',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});c.push({key:'out',label:'Removed from the villa list (not counted)',color:'#eef2f6',ns:true});return c},
     key(p){return p.group==='wip'?'s'+p.stageIdx:p.group==='nyt'?'ns':p.group}},
   sales:{title:"Sales status (not started)",cats(){const c=[{grp:"Not yet started"}];
       Object.entries(SALES).forEach(([k,[l,col]])=>c.push({key:'sl:'+k,label:l,color:col,ns:true}));
-      c.push({grp:"Other"});c.push({key:'wip',label:'Under construction',color:'#cbd5e1'});c.push({key:'done',label:'Handed over (HO list)',color:C_NEUTRAL});c.push({key:'sold',label:'Sold · construction not started',color:'#c4b5fd',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#bae6fd',ns:true});c.push({key:'unk',label:'Not in any list',color:'#cbd5e1',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});c.push({key:'out',label:'Not in project report (not counted)',color:'#eef2f6',ns:true});return c},
+      c.push({grp:"Other"});c.push({key:'wip',label:'Under construction',color:'#cbd5e1'});c.push({key:'done',label:'Handed over (HO list)',color:C_NEUTRAL});c.push({key:'sold',label:'Sold · construction not started',color:'#c4b5fd',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#bae6fd',ns:true});c.push({key:'unk',label:'Not in any list',color:'#cbd5e1',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});c.push({key:'out',label:'Removed from the villa list (not counted)',color:'#eef2f6',ns:true});return c},
     key(p){return p.group==='nyt'?'sl:'+(SALES[p.sales]?p.sales:'—'):p.group}},
   contractor:{title:"Contractor (under construction)",cats(){const c=[{grp:"Under construction"}];
       contractors.forEach(n=>c.push({key:'c:'+n,label:n,color:conColor(n)}));
-      c.push({grp:"Other"});c.push({key:'nyt',label:'Not yet started',color:C_NS,ns:true});c.push({key:'done',label:'Handed over (HO list)',color:C_NEUTRAL});c.push({key:'sold',label:'Sold · construction not started',color:'#c4b5fd',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#bae6fd',ns:true});c.push({key:'unk',label:'Not in any list',color:'#cbd5e1',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});c.push({key:'out',label:'Not in project report (not counted)',color:'#eef2f6',ns:true});return c},
+      c.push({grp:"Other"});c.push({key:'nyt',label:'Not yet started',color:C_NS,ns:true});c.push({key:'done',label:'Handed over (HO list)',color:C_NEUTRAL});c.push({key:'sold',label:'Sold · construction not started',color:'#c4b5fd',ns:true});c.push({key:'listed',label:'In WIP list · no progress recorded',color:'#bae6fd',ns:true});c.push({key:'unk',label:'Not in any list',color:'#cbd5e1',ns:true});c.push({key:'office',label:'Site office (not sold)',color:'#7b8794'});c.push({key:'out',label:'Removed from the villa list (not counted)',color:'#eef2f6',ns:true});return c},
     key(p){return p.group==='wip'?'c:'+(p.contractor||'Not assigned'):p.group}},
-  work:{title:"Work completed (activities)",cats(){return [{grp:"27 finishing activities"},{key:'w100',label:'100% complete',color:'#14a37f'},{key:'w75',label:'75 – 99%',color:'#2563eb'},{key:'w50',label:'50 – 74%',color:'#60a5fa'},{key:'w25',label:'25 – 49%',color:'#93c5fd'},{key:'w1',label:'1 – 24%',color:'#c7d2fe'},{key:'w0',label:'Not started (0%)',color:'#e2e8f0',ns:true},{key:'out',label:'Not in project report (not counted)',color:'#eef2f6',ns:true}]},
+  work:{title:"Work completed (activities)",cats(){return [{grp:"27 finishing activities"},{key:'w100',label:'100% complete',color:'#14a37f'},{key:'w75',label:'75 – 99%',color:'#2563eb'},{key:'w50',label:'50 – 74%',color:'#60a5fa'},{key:'w25',label:'25 – 49%',color:'#93c5fd'},{key:'w1',label:'1 – 24%',color:'#c7d2fe'},{key:'w0',label:'Not started (0%)',color:'#e2e8f0',ns:true},{key:'out',label:'Removed from the villa list (not counted)',color:'#eef2f6',ns:true}]},
     key(p){if(p.group==='out'||p.wpct==null)return 'out';const v=p.wpct;return v>=1?'w100':v>=.75?'w75':v>=.5?'w50':v>=.25?'w25':v>0?'w1':'w0'}},
   drawing:{title:"Status marked on drawing",cats(){const c=[{grp:"Hatch on UTF_LAYOUT_1"}];
       Object.entries(HATCH).forEach(([k,[l,col]])=>c.push({key:'h:'+k,label:l,color:col,ns:k==='none'}));
@@ -1103,7 +1106,7 @@ function renderSummary(){
   h+=`<tr><td><b>Villas with a status</b></td><td class="num"><b>${tv}</b></td><td class="num"><b>${tp}</b></td></tr>`;
   h+=`<tr><td>Not in any list (plots without a status)</td><td class="num">${VC.unk}</td><td class="num">${pc('unk')}</td></tr>`;
   h+=`<tr><td><b>Total counted</b></td><td class="num"><b>${tv+VC.unk}</b></td><td class="num"><b>${tp+pc('unk')}</b></td></tr>`;
-  h+=`<tr><td>Not in project report (drawn, not counted)</td><td class="num">${VC.out}</td><td class="num">${pc('out')}</td></tr>`;
+  h+=`<tr><td>Removed from the villa list (drawn, not counted)</td><td class="num">${VC.out}</td><td class="num">${pc('out')}</td></tr>`;
   h+=`<tr><td>of which Ravikanth Reddy plots (drawing)</td><td class="num">${VC.rr}</td><td class="num"></td></tr>`;
   h+=`<tr><td>Report total (TOTAL-VILLAS sheet)</td><td class="num">${REPORT_TOTAL}</td><td class="num"></td></tr>`;
   const diff=tv+VC.unk-REPORT_TOTAL;h+=`<tr><td><b>Difference to the report</b></td><td class="num"><b style="color:${diff?'#c62828':'inherit'}">${diff>0?'+':''}${diff}</b></td><td class="num"></td></tr>`;
@@ -1118,7 +1121,8 @@ function renderSummary(){
    const tot=tv+VC.unk;
    li.push(`${tot} villas on the master layout, counted by villa (combined plots count once). The report's TOTAL-VILLAS sheet has ${REPORT_TOTAL} rows; the difference is explained below.`);
    li.push(`Report 27-10-2026, TOTAL-VILLAS sheet: its 250 rows are 242 different villas (AX24 ×3, E6 ×2 and E35 / E-35 repeated; CX-8 + CX-10 and 1B + 1E entered as rows of their own). Villas missing from it but in the report's other sheets or confirmed by the site team: 107 & 108, 69 & 70, 21, E24, E28, 101, AX-7, AX-8, AX-13, AX-14, AX-15 and AX-39.`);
-   li.push(`Combined villas: the report's Combined Villas sheet plus 69 & 70, 107 & 108, 14A & 14B, 1B & 1E, 1A & 1F, 1C & 1D and CX-8 & 11 (site team, 28-10-2026). 3, 103, 104 and CX-10 are villas of their own.`);
+   li.push(`Combined villas follow Shiva's Combined Villas sheet (updated 11-11-2026), incl. 103 & 104 and CX-8 & CX-11, plus 69 & 70, 14A & 14B, 1B & 1E, 1A & 1F and 1C & 1D. 3 and CX-10 are villas of their own.`);
+   li.push(`11-11-2026: E36 removed from the villa list (still drawn on the master layout, not counted); 103 & 104 counted as one villa; CX-8 & CX-11 one villa; villa 51 contractor Ansari Mandal.`);
    const rrd=rr('done'),rrw=rr('wip'),rrn=rr('nyt');
    li.push(`Ravikanth Reddy plots (${VC.rr}): ${[rrn.length?'not yet started '+rrn.join(', '):'',rrw.length?'under construction '+rrw.join(', '):'',rrd.length?'handed over '+rrd.join(', '):''].filter(Boolean).join('; ')}.`);
    li.push(`Sales status, site team 28-10-2026: CX-15, CX-16, CX-19 to CX-27, AX-39 and the unsold plots of the 1, 2 and 3 series are open and not plotted; 1A & 1F, 1C & 1D, AX-6 and E29 are customer choice; 40E is sold, plotted, customer choice.`);
@@ -1341,7 +1345,7 @@ function rowHTML(p){
 }
 function entryRows(){
   const q=$('#eq').value.trim().toLowerCase(),se=$('#es').value,st=$('#est').value,only=$('#eonly').checked;
-  return PLOTS.filter(p=>(!q||[p.id,p.entry,p.customer,p.contractor,p.remarks].join(' ').toLowerCase().includes(q))&&(!se||p.series===se)&&(!st||(st==='needs'?NEEDS(p):(p.fromDrawing?'nyt':p.group)===st))&&(!only||p.ov||dirty.has(p.id)))
+  return PLOTS.filter(p=>!REMOVED.has(p.id)).filter(p=>(!q||[p.id,p.entry,p.customer,p.contractor,p.remarks].join(' ').toLowerCase().includes(q))&&(!se||p.series===se)&&(!st||(st==='needs'?NEEDS(p):(p.fromDrawing?'nyt':p.group)===st))&&(!only||p.ov||dirty.has(p.id)))
     .sort((a,b)=>SO.indexOf(a.series)-SO.indexOf(b.series)||natural(a.id,b.id));
 }
 const ENTRY_OPEN=new Set();const SERL={Numbered:'Number series','1':'1 series','2':'2 series','3':'3 series',E:'E series','9':'9 series','18':'18 series',AX:'AX series',CX:'CX series'};
